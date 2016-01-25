@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test Report</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<!-- 新 Bootstrap 核心 CSS 文件 -->
+	<link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	
+	<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+	<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+
+	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+	<script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+	<div class="container-fluid">
+		<div>
+		  <span>设备信息:</span><!--<span style="margin-left:20px"><button class="btn btn-warning">刷新状态</button></span>-->
+		  <table class="table table-bordered" style="margin-top:5px;width:50%;text-align:center">
+		  	{% if devices %}
+			  <thead>
+				<tr>
+				  <th style="width:30%;text-align:center">设备名称</th>
+				  <th style="width:20%;text-align:center">连接状态</th>
+				  <th style="width:50%;text-align:center">操作</th>
+				</tr>
+			  </thead>
+			  <tbody>
+			  
+				  {% for device in devices %}
+						<tr>
+							{% if device.state == 'device' %}
+								<td>{{ device.deviceName }}</td>
+								
+								<td>{% if isconnect %}操作中..{% else %}连接正常{% endif %}</td>
+								<td>
+									{% if isconnect %}
+										<button class="btn btn-danger connectDevice" id="{{ device.deviceName }}">断开连接</button>
+									{% else %}
+										<button class="btn btn-default connectDevice" id="{{ device.deviceName }}">连接</button>
+									{% endif %}
+									<span style="display:none" id="formspan_{{ device.deviceName }}">
+										<form id="form_{{device.deviceName}}">
+											<label><input name='apk' type='file' /></label>
+										</form>
+										<button onclick="install_apk('{{device.deviceName}}')" class='btn btn-warning'>安装并启动</button>
+									</span>
+								</td>
+							{% elif device.state == 'unauthorized' %}
+								<td>{{ device.deviceName }}</td><td>未授权</td><td><button class="btn btn-default connectDevice" id="{{ device.deviceName }}" disabled>未授权(unauthorized)</button></td>
+							{% elif device.state == 'offline' %}
+								<td>{{ device.deviceName }}</td><td>离线(offline)</td><td><button class="btn btn-default connectDevice" id="{{ device.deviceName }}" disabled>离线(offline)</button></td>
+							{% endif %}
+						</tr>
+				  {% endfor %}
+			  {% else %}
+					<td>没有连接的设备</td>
+			  {% endif %}
+			  </tbody>
+		  </table>
+		</div>
+		<div class="row" style="margin-top:30px;">
+            <iframe id="devicecontainer" align="center" width="100%" src="/getscreen" frameborder="no" border="0" marginwidth="0" marginheight="0" height="2000" scrolling="no">
+            </iframe>
+		</div>
+	</div>
+	
+<script language="javascript">
+	$(function() {
+		$(".connectDevice").click(function() {
+			var deviceName = this.id
+			$.post("http://10.88.0.40:8088/connect/"+deviceName,function(data) {
+				console.log(deviceName)
+				isAppiumReady(deviceName)
+			})
+		})
+
+	})
+
+
+	var ts = new Array();
+	var appium_not_ready = true;
+
+	function isAppiumReady(deviceName){ 
+		console.log("deviceName:"+deviceName)
+		var interval_id = window.setInterval(function() {
+			$.get("http://10.88.0.40:8088/isappiumready",function(data) {
+				if (data.status) {
+					window.clearInterval(interval_id)
+					if(appium_not_ready){
+						console.log(interval_id)
+						$("#"+deviceName).removeClass("btn-default btn-warning").addClass("btn-success").html("连接成功").attr("disabled", false)
+						$("#formspan_"+deviceName).show()
+						appium_not_ready = false
+					}
+				}else{
+					$("#"+deviceName).attr("disabled", true).removeClass("btn-default").addClass("btn-warning").html("正在连接")
+				}
+			})
+		},1000)
+	} 
+
+	function install_apk(deviceName) {
+		console.log("11111,"+deviceName)
+		$.ajax({
+			cache: false,
+			type: "POST",
+			url:"http://10.88.0.40:8088/getscreen",
+			data:$('#form_'+deviceName).serialize(),
+			async: false,
+			error: function(request) {
+				alert("Connection error");
+			},
+			success: function(data) {
+				if(data == 'ok'){
+					$("#formspan_"+deviceName).hide()
+					document.getElementById('devicecontainer').contentWindow.location.reload(true);
+				}
+			}
+		});
+
+}
+</script>
+</body>
+</html>

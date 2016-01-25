@@ -1,0 +1,51 @@
+body a{
+	transition: 0.5s all ease;
+	-webkit-transition: 0.5s all ease;
+	-moz-transition: 0.5s all ease;
+	-o-transition: 0.5s all ease;
+	-ms-transition: 0.5s all ease;
+}
+
+body a:hover{
+	text-decoration:none;
+}
+
+.navigation {
+	float: left;
+	color: #76EE00;
+}
+
+.navigation span {
+	margin-left:10px;
+}
+
+.header {
+	padding: 2em 0;
+	background: black;
+}
+
+.banner {
+	padding-top: 3em;
+	background: black;
+	height:1000px;
+	border-top: 1px solid rgba(255, 255, 255, 0.17);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.29);
+}
+.banner-right{
+	margin-top:1.4em;
+	margin-left:5em;
+	width: 65%;
+	float: left;
+}
+.banner-right h1 {
+	font-weight: 700;
+	font-size: 1.95em;
+	color: #fff;
+	margin: 0;
+}
+.pre-next {
+	margin-top:20px
+}
+.needcenter {
+	text-align:center;
+}
