@@ -36,21 +36,21 @@
 								<td>{% if isconnect %}操作中..{% else %}连接正常{% endif %}</td>
 								<td>
 									{% if isconnect %}
-										<button class="btn btn-danger connectDevice" id="{{ device.deviceName }}">断开连接</button>
+										<button class="btn btn-danger connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}">断开连接</button>
 									{% else %}
-										<button class="btn btn-default connectDevice" id="{{ device.deviceName }}">连接</button>
+										<button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}">连接</button>
 									{% endif %}
-									<span style="display:none" id="formspan_{{ device.deviceName }}">
-										<form id="form_{{device.deviceName}}">
+									<span style="display:none" id="formspan_{{ device.replacedName }}">
+										<form id="form_{{device.replacedName}}">
 											<label><input name='apk' type='file' /></label>
 										</form>
-										<button onclick="install_apk('{{device.deviceName}}')" class='btn btn-warning'>安装并启动</button>
+										<button onclick="install_apk('{{device.replacedName}}')" class='btn btn-warning'>安装并启动</button>
 									</span>
 								</td>
 							{% elif device.state == 'unauthorized' %}
-								<td>{{ device.deviceName }}</td><td>未授权</td><td><button class="btn btn-default connectDevice" id="{{ device.deviceName }}" disabled>未授权(unauthorized)</button></td>
+								<td>{{ device.deviceName }}</td><td>未授权</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>未授权(unauthorized)</button></td>
 							{% elif device.state == 'offline' %}
-								<td>{{ device.deviceName }}</td><td>离线(offline)</td><td><button class="btn btn-default connectDevice" id="{{ device.deviceName }}" disabled>离线(offline)</button></td>
+								<td>{{ device.deviceName }}</td><td>离线(offline)</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>离线(offline)</button></td>
 							{% endif %}
 						</tr>
 				  {% endfor %}
@@ -69,27 +69,25 @@
 <script language="javascript">
 	$(function() {
 		$(".connectDevice").click(function() {
-			var deviceName = this.id
-			$.post("http://10.88.0.40:8088/connect/"+deviceName,function(data) {
-				console.log(deviceName)
-				isAppiumReady(deviceName)
+			var deviceName = this.name
+			var replacedName = this.id
+			$.post("/connect/"+deviceName,function(data) {
+				isAppiumReady(replacedName)
 			})
 		})
-
 	})
-
 
 	var ts = new Array();
 	var appium_not_ready = true;
 
 	function isAppiumReady(deviceName){ 
-		console.log("deviceName:"+deviceName)
+		//console.log("deviceName:"+deviceName)
 		var interval_id = window.setInterval(function() {
-			$.get("http://10.88.0.40:8088/isappiumready",function(data) {
+			$.get("/isappiumready",function(data) {
 				if (data.status) {
 					window.clearInterval(interval_id)
 					if(appium_not_ready){
-						console.log(interval_id)
+						//console.log(interval_id)
 						$("#"+deviceName).removeClass("btn-default btn-warning").addClass("btn-success").html("连接成功").attr("disabled", false)
 						$("#formspan_"+deviceName).show()
 						appium_not_ready = false
@@ -101,20 +99,19 @@
 		},1000)
 	} 
 
-	function install_apk(deviceName) {
-		console.log("11111,"+deviceName)
+	function install_apk(replacedName) {
 		$.ajax({
 			cache: false,
 			type: "POST",
-			url:"http://10.88.0.40:8088/getscreen",
-			data:$('#form_'+deviceName).serialize(),
+			url:"/getscreen",
+			data:$('#form_'+replacedName).serialize(),
 			async: false,
 			error: function(request) {
 				alert("Connection error");
 			},
 			success: function(data) {
 				if(data == 'ok'){
-					$("#formspan_"+deviceName).hide()
+					$("#formspan_"+replacedName).hide()
 					document.getElementById('devicecontainer').contentWindow.location.reload(true);
 				}
 			}

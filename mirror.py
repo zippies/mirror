@@ -1,16 +1,14 @@
 from flask import Flask,render_template,request,url_for,jsonify,redirect
 from multiprocessing import Process
 from xml.dom import minidom
+from config import debug,port
 from datetime import datetime
 from subprocess import Popen,PIPE
 from main.basecase import AndroidDevice
 import os,json,re,platform,requests,time,signal,sys,copy
-from pprint import pprint 
 
 app = Flask(__name__)
 _id = 0
-_deep = 0
-nodeparents = []
 appium_port = 14111
 bootstrap_port = 14112
 appium_log_level = "error"
@@ -19,6 +17,7 @@ nodeDatas = []
 nodeinfos = {}
 frameinfos = {}
 reversedframe = False
+reverseframe = {}
 
 def getChildNodes(node):
 	nodes = [n for n in node.childNodes if n.nodeName !='#text']
@@ -142,7 +141,6 @@ def getDeviceState():
 	p = Popen(cmd,stdout=PIPE,shell=True)
 	for info in p.stdout.readlines():
 		info = info.decode()
-		print(info)
 		if 'List' in info:
 			continue
 		elif 'offline' in info or 'unauthorized' in info or 'device' in info:
@@ -150,6 +148,10 @@ def getDeviceState():
 			name,state = [n.strip() for n in info.split('\t') if n.strip()]
 			device["deviceName"] = name
 			device["state"] = state
+			if ":" in name:
+				device["replacedName"] = name.replace(".","").replace(":","")
+			else:
+				device["replacedName"] = name
 			devices.append(device)
 		else:
 			continue
@@ -240,7 +242,7 @@ def swipe(direction):
 
 @app.route("/click/<id>")
 def click(id):
-	global driver,frameinfos,reversedframe
+	global driver,frameinfos
 	resp = {"status":True,"info":None}
 	elem = frameinfos.get(int(id))
 
@@ -319,8 +321,7 @@ def freshScreen():
 
 @app.route('/getscreen',methods=["GET","POST"])
 def getScreen():
-	global driver,nodeDatas,nodeinfos,frameinfos,reversedframe
-	reverseframe = None
+	global driver,nodeDatas,nodeinfos,frameinfos,reversedframe,reverseframe
 	if reversedframe:
 		reverseframe = copy.deepcopy(frameinfos)
 		for id in reverseframe.keys():
@@ -361,15 +362,17 @@ def getScreen():
 
 @app.route("/showcloser")
 def showCloser():
-	global frameinfos
+	global frameinfos,reverseframe,reversedframe
 	x,y = request.args.get('x'),request.args.get('y')
 	closer = 0
 	minner = 100000000
-	for i,v in frameinfos.items():
+	frame = frameinfos if not reversedframe else reverseframe
+	for i,v in frame.items():
 		if i and v and v['x1']<int(x)<v['x1']+v['width'] and v['y1']<int(y)<v['y1']+v['height']:
 			if v['width']*v['height'] < minner:
 				minner =  v['width'] * v['height'] 
 				closer = i
+
 	return str(closer)
 
 @app.route('/')
@@ -388,12 +391,5 @@ def index():
 	)
 
 if __name__ == "__main__":
-	app.debug = True
-	app.run('10.88.0.40',port=8088)
-	# page_source = open('page_source.xml','r').read()
-	# page_source = re.sub("[\x00-\x08\x0b-\x0c\x0e-\x1f]+",u"",page_source)
-	# try:
-	# 	root = minidom.parseString(page_source).documentElement
-	# 	print(root.nodeName)
-	# except Exception as e:
-	# 	print(e)
+	app.debug = debug
+	app.run('10.88.0.40',port=port)

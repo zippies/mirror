@@ -88,12 +88,13 @@ $(function() {
 	}
 	
 	$('#screenshot').imgNotes(notes);
+
 	var imageMenuData = [
 		[
 		{
 			text: "点击",
 			func: function() {
-				$.get("http://10.88.0.40:8088/click/"+this.id,function(data){
+				$.get("/click/"+this.id,function(data){
 					if(!data.status){
 						layer.alert(data.info)
 					}else{
@@ -110,7 +111,7 @@ $(function() {
 					title: '输入内容,并确认',
 					formType: 0
 				}, function(px){
-					$.get("http://10.88.0.40:8088/swipe/up",{"id":id,"px":px},function(data){
+					$.get("/swipe/up",{"id":id,"px":px},function(data){
 						if(!data.status){
 							layer.alert(data.info)
 						}else{
@@ -128,7 +129,7 @@ $(function() {
 					title: '输入内容,并确认',
 					formType: 0
 				}, function(px){
-					$.get("http://10.88.0.40:8088/swipe/down",{"id":id,"px":px},function(data){
+					$.get("/swipe/down",{"id":id,"px":px},function(data){
 						if(!data.status){
 							layer.alert(data.info)
 						}else{
@@ -146,7 +147,7 @@ $(function() {
 					title: '输入内容,并确认',
 					formType: 0
 				}, function(px){
-					$.get("http://10.88.0.40:8088/swipe/left",{"id":id,"px":px},function(data){
+					$.get("/swipe/left",{"id":id,"px":px},function(data){
 						if(!data.status){
 							layer.alert(data.info)
 						}else{
@@ -164,7 +165,7 @@ $(function() {
 					title: '输入内容,并确认',
 					formType: 0
 				}, function(px){
-					$.get("http://10.88.0.40:8088/swipe/right",{"id":id,"px":px},function(data){
+					$.get("/swipe/right",{"id":id,"px":px},function(data){
 						if(!data.status){
 							layer.alert(data.info)
 						}else{
@@ -182,7 +183,7 @@ $(function() {
 					title: '输入内容,并确认',
 					formType: 0
 				}, function(text){
-					$.get("http://10.88.0.40:8088/sendtext/"+elem_id,{"text":text},function(data){
+					$.get("/sendtext/"+elem_id,{"text":text},function(data){
 						if(!data.status){
 							layer.alert("error:"+data.info)
 						}else{
@@ -230,7 +231,7 @@ $(function() {
 	var $selectableTree = initSelectableTree();
 
 	$("#goback").click(function(){
-		$.get("http://10.88.0.40:8088/sendkeycode/4",function(data){
+		$.get("/sendkeycode/4",function(data){
 			if(!data.status){
 				layer.alert("error:"+data.info)
 			}else{
@@ -240,7 +241,7 @@ $(function() {
 	});
 
 	$("#gohome").click(function(){
-		$.get("http://10.88.0.40:8088/sendkeycode/3",function(data){
+		$.get("/sendkeycode/3",function(data){
 			if(!data.status){
 				layer.alert("error:"+data.info)
 			}else{

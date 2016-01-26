@@ -1,15 +1,3 @@
-/*
- * smartMenu.js 智能上下文菜单插件
- * http://www.zhangxinxu.com/
- *
- * Copyright 2011, zhangxinxu
- *
- * 2011-05-26 v1.0	编写
- * 2011-06-03 v1.1	修复func中this失准问题
- * 2011-10-10 v1.2  修复脚本放在<head>标签中层无法隐藏的问题
- * 2011-10-30 v1.3  修复IE6~7下二级菜单移到第二项隐藏的问题
- */
- 
 (function($) {
 	var D = $(document).data("func", {});	
 	$.smartMenu = $.noop;
