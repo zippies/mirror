@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+#autor: chao.chen
+#datetime: 2016-01-26
 from flask import Flask,render_template,request,url_for,jsonify,redirect
 from multiprocessing import Process
 from xml.dom import minidom
@@ -425,4 +428,4 @@ def index():
 
 if __name__ == "__main__":
 	app.debug = debug
-	app.run('10.88.0.40',port=port)
+	app.run('0.0.0.0',port=port)

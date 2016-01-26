@@ -91,23 +91,23 @@ $(function() {
 
 	var imageMenuData = [
 		[
-		{
-			text: "点击",
-			func: function() {
-				$.get("/click/"+this.id,function(data){
-					if(!data.status){
-						layer.alert(data.info)
-					}else{
-						window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-					}
-				})
-			}
-		},
-		{
-			text: "滑动元素",
-			data:[[
-
-				{
+			{
+				text: "点击",
+				func: function() {
+					$.get("/click/"+this.id,function(data){
+						if(!data.status){
+							layer.alert(data.info)
+						}else{
+							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+						}
+					})
+				}
+			},
+			{
+				text: "滑动元素",
+				data:
+					[[
+						{
 							text: "向上滑动",
 							func: function() {
 								var id = this.id
@@ -178,50 +178,48 @@ $(function() {
 									})
 								});
 							}
-						}]]
-
-
-
-		},
-		{
-			text: "输入内容",
-			func: function() {
-				elem_id = this.id
-				layer.prompt({
-					title: '输入内容,并确认',
-					formType: 0
-				}, function(text){
-					$.get("/sendtext/"+elem_id,{"text":text},function(data){
+						}
+					]]
+			},
+			{
+				text: "输入内容",
+				func: function() {
+					elem_id = this.id
+					layer.prompt({
+						title: '输入内容,并确认',
+						formType: 0
+					}, function(text){
+						$.get("/sendtext/"+elem_id,{"text":text},function(data){
+							if(!data.status){
+								layer.alert("error:"+data.info)
+							}else{
+								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+							}
+						})
+					});
+				}
+			},
+			{
+				text: "清空内容",
+				func: function() {
+					elem_id = this.id
+					$.get("/cleartext/"+elem_id,function(data){
 						if(!data.status){
 							layer.alert("error:"+data.info)
 						}else{
 							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 						}
 					})
-				});
+				}
 			}
-		},
-		{
-			text: "清空内容",
-			func: function() {
-				elem_id = this.id
-				$.get("/cleartext/"+elem_id,function(data){
-					if(!data.status){
-						layer.alert("error:"+data.info)
-					}else{
-						window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-					}
-				})
-			}
-		}
 		],
 		[
-		{
-			text: "取消选择",
-			func: function() {
-				$("#"+this.id).hide()
+			{
+				text: "取消选择",
+				func: function() {
+					$("#"+this.id).hide()
+				}
 			}
-		}
 		]
 	];
 
