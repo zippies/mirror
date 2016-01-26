@@ -9,7 +9,7 @@ a web tool to replace the uiautomatorviewer(just for android)
 
 配置使用：
 
-	1、修改config.py中的port,选一个本机未被占用的端口就行，默认8089(也可以不修改，使用默认值)
+	1、修改config.py中的port(选一个本机未被占用的端口就行，默认8089),以及apk存放路径和设备信息
 
 	2、dos命令行进入主目录，运行：python mirror.py 
 

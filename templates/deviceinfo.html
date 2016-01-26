@@ -58,7 +58,7 @@
 					</table>
 			</div>
 			<div class="col-md-3">
-				<div class="checkbox" style="margin-left:10px;margin-right:10px">
+				<div style="margin-left:10px;margin-right:10px">
 					<span><a id="goback">返回</a></span><span style="margin:0 auto">
 					<a id="gohome">Home</a></span>
 				</div>
@@ -104,76 +104,84 @@ $(function() {
 			}
 		},
 		{
-			text: "向上滑动",
-			func: function() {
-				var id = this.id
-				layer.prompt({
-					title: '输入内容,并确认',
-					formType: 0
-				}, function(px){
-					$.get("/swipe/up",{"id":id,"px":px},function(data){
-						if(!data.status){
-							layer.alert(data.info)
-						}else{
-							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-						}
-					})
-				});
-			}
-		},
-		{
-			text: "向下滑动",
-			func: function() {
-				var id = this.id
-				layer.prompt({
-					title: '输入内容,并确认',
-					formType: 0
-				}, function(px){
-					$.get("/swipe/down",{"id":id,"px":px},function(data){
-						if(!data.status){
-							layer.alert(data.info)
-						}else{
-							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-						}
-					})
-				});
-			}
-		},
-		{
-			text: "向左滑动",
-			func: function() {
-				var id = this.id
-				layer.prompt({
-					title: '输入内容,并确认',
-					formType: 0
-				}, function(px){
-					$.get("/swipe/left",{"id":id,"px":px},function(data){
-						if(!data.status){
-							layer.alert(data.info)
-						}else{
-							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-						}
-					})
-				});
-			}
-		},
-		{
-			text: "向右滑动",
-			func: function() {
-				var id = this.id
-				layer.prompt({
-					title: '输入内容,并确认',
-					formType: 0
-				}, function(px){
-					$.get("/swipe/right",{"id":id,"px":px},function(data){
-						if(!data.status){
-							layer.alert(data.info)
-						}else{
-							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-						}
-					})
-				});
-			}
+			text: "滑动元素",
+			data:[[
+
+				{
+							text: "向上滑动",
+							func: function() {
+								var id = this.id
+								layer.prompt({
+									title: '输入内容,并确认',
+									formType: 0
+								}, function(px){
+									$.get("/swipe/up",{"id":id,"px":px},function(data){
+										if(!data.status){
+											layer.alert(data.info)
+										}else{
+											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+										}
+									})
+								});
+							}
+						},
+						{
+							text: "向下滑动",
+							func: function() {
+								var id = this.id
+								layer.prompt({
+									title: '输入内容,并确认',
+									formType: 0
+								}, function(px){
+									$.get("/swipe/down",{"id":id,"px":px},function(data){
+										if(!data.status){
+											layer.alert(data.info)
+										}else{
+											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+										}
+									})
+								});
+							}
+						},
+						{
+							text: "向左滑动",
+							func: function() {
+								var id = this.id
+								layer.prompt({
+									title: '输入内容,并确认',
+									formType: 0
+								}, function(px){
+									$.get("/swipe/left",{"id":id,"px":px},function(data){
+										if(!data.status){
+											layer.alert(data.info)
+										}else{
+											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+										}
+									})
+								});
+							}
+						},
+						{
+							text: "向右滑动",
+							func: function() {
+								var id = this.id
+								layer.prompt({
+									title: '输入内容,并确认',
+									formType: 0
+								}, function(px){
+									$.get("/swipe/right",{"id":id,"px":px},function(data){
+										if(!data.status){
+											layer.alert(data.info)
+										}else{
+											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+										}
+									})
+								});
+							}
+						}]]
+
+
+
 		},
 		{
 			text: "输入内容",
@@ -191,6 +199,19 @@ $(function() {
 						}
 					})
 				});
+			}
+		},
+		{
+			text: "清空内容",
+			func: function() {
+				elem_id = this.id
+				$.get("/cleartext/"+elem_id,function(data){
+					if(!data.status){
+						layer.alert("error:"+data.info)
+					}else{
+						window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+					}
+				})
 			}
 		}
 		],

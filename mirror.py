@@ -1,7 +1,7 @@
 from flask import Flask,render_template,request,url_for,jsonify,redirect
 from multiprocessing import Process
 from xml.dom import minidom
-from config import debug,port
+from config import debug,port,apk,device_info
 from datetime import datetime
 from subprocess import Popen,PIPE
 from main.basecase import AndroidDevice
@@ -204,6 +204,15 @@ def connectDevice(devicename):
 
 	return info
 
+
+@app.route("/disconnect")
+def disconnect():
+	global driver
+	driver.quit()
+	driver = None
+	stopAppium()
+	return "ok"
+
 @app.route("/isappiumready")
 def isAppiumReady():
 	data = None
@@ -250,6 +259,7 @@ def click(id):
 		x,y = round((elem['x1']+round(elem['width']/2))/0.4),round((elem['y1']+round(elem['height']/2))/0.4)
 		print("click at:",x,y)
 		driver.click_point(x,y)
+		print("click end")
 		freshScreen()
 	except Exception as e:
 		resp["status"] = False
@@ -267,6 +277,27 @@ def sendText(id):
 	try:
 		if elem_id:
 			driver.input('id',elem_id,text)
+			freshScreen()
+		else:
+			resp["status"] = False
+			resp["info"] = "Make sure this element has an id"
+	except Exception as e:
+		resp["status"] = False
+		resp["info"] = str(e)
+
+	return jsonify(resp)
+
+@app.route("/cleartext/<id>")
+def clearText(id):
+	global driver,nodeinfos
+	resp = {"status":True,"info":None}
+	elem = nodeinfos[int(id)]
+	elem_id = elem.get("resource-id")
+	try:
+		if elem_id:
+			driver.click('id',elem_id)
+			driver.press_keycode(29,28672)
+			driver.press_keycode(67)
 			freshScreen()
 		else:
 			resp["status"] = False
@@ -304,8 +335,11 @@ def getAppInfo(apk):
 def freshScreen():
 	global _id,driver,nodeDatas,nodeinfos,frameinfos
 	_id = 0
+	print("fresh begin")
 	nodeDatas,nodeinfos,frameinfos = [],{},{}
+	print("save screen begin")
 	driver.save_screen(os.path.join(os.getcwd(),'static','images',"current.png"))
+	print("save screen end")
 	page_source = driver.page_source
 	page_source = re.sub("[\x00-\x08\x0b-\x0c\x0e-\x1f]+",u"",page_source)
 	try:
@@ -317,7 +351,7 @@ def freshScreen():
 		if node.nodeName != "#text":
 			datadict = getNodes(i+1,root,nodeinfos,frameinfos)
 			nodeDatas.append(datadict)
-
+	print("fresh end")
 
 @app.route('/getscreen',methods=["GET","POST"])
 def getScreen():
@@ -333,24 +367,23 @@ def getScreen():
 				reverseframe[id]['x1'],reverseframe[id]['y1'],reverseframe[id]['width'],reverseframe[id]['height'] = x1,y1,width,height
 
 	if request.method == "POST":
-		apk = "C:\\Users\\Administrator\\Downloads\\apks\\backup.apk"
+		devicename = request.args.get("devicename")
+		capabilities = {}
+		capabilities['app'] = apk
 		packageName,main_activity = getAppInfo(apk)
-		capabilities = {
-			"deviceName": "M3LDU15424001636",
-			"platformName": "Android",
-			"platformVersion": "4.4",
-			#"app": apk,
-			"appPackage": packageName,
-			"appActivity": main_activity,
-			"newCommandTimeout": 300,
-			"noSign": True,
-			"unicodeKeyboard":True,
-			"resetKeyboard":True
-		}
+		capabilities["appPackage"] = packageName
+		capabilities["appActivity"] = main_activity
+		capabilities["newCommandTimeout"] = 1800
+		capabilities["noSign"] = True
+		capabilities["unicodeKeyboard"] = True
+		capabilities["resetKeyboard"] = True
+		capabilities["deviceName"] = devicename
+		capabilities["platformName"] = device_info[device]['platformName'] if devicename in device_info.keys() else "Android"
+		capabilities["platformVersion"] = device_info[device]['platformVersion'] if devicename in device_info.keys() else "4.4"
+
 		driver = AndroidDevice("http://localhost:%s/wd/hub" %appium_port,capabilities)
-		driver.sleep(5)
+		driver.sleep(4)
 		freshScreen()
-		print("current_activity:",driver.current_activity)
 		return "ok"
 
 	return render_template(
