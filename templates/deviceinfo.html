@@ -3,24 +3,14 @@
 <head>
 	<title>Test Report</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<!-- 新 Bootstrap 核心 CSS 文件 -->
-	<link rel="stylesheet" href="static/css/bootstrap.min.css">
-	
-	<link rel="stylesheet" type="text/css" href="static/css/smartMenu.css" >
-	<link rel="stylesheet" type="text/css" href="static/css/imgnotes.css" >
-
-	<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+	<link rel="stylesheet" href="static/css/bootstrap.min.css" />
+	<link rel="stylesheet" type="text/css" href="static/css/smartMenu.css" />
+	<link rel="stylesheet" type="text/css" href="static/css/imgnotes.css" />
 	<script src="static/js/jquery.min.js"></script>
-
-	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
 	<script src="static/js/bootstrap.min.js"></script>
-	
 	<script src="static/js/bootstrap-treeview.js"></script>
-	
 	<script type="text/javascript" src="static/js/jquery.imgnotes-0.1.js"></script>
-	
 	<script type="text/javascript" src="static/js/jquery-smartMenu.js"></script>
-	
 	<script type="text/javascript" src="static/js/layer.js"></script>
 </head>
 <body>
@@ -31,38 +21,39 @@
 					  <thead>
 						<tr>
 						  <th style="width:20%">属性</th>
-						  <th style="width:80%">值</th>
+						  <th style="width:80%;text-align:center">值</th>
 						</tr>
 					  </thead>
 					  <tbody id="nodebody">
+					  	<tr><td>resource-id</td><td></td></tr>
+					  	<tr><td>class</td><td></td></tr>
+					  	<tr><td>content-desc</td><td></td></tr>
+					  	<tr><td>text</td><td></td></tr>
+					  	<tr><td>index</td><td></td></tr>
+					  	<tr><td>xpath</td><td></td></tr>
+					  	<tr><td>bounds</td><td></td></tr>
+					  	<tr><td>package</td><td></td></tr>
 						<tr><td>focusable</td><td></td></tr>
-						<tr><td>resource-id</td><td></td></tr>
 						<tr><td>scrollable</td><td></td></tr>
 						<tr><td>long-clickable</td><td></td></tr>
-						<tr><td>content-desc</td><td></td></tr>
-						<tr><td>text</td><td></td></tr>
 						<tr><td>password</td><td></td></tr>
-						<tr><td>index</td><td></td></tr>
-						<tr><td>class</td><td></td></tr>
 						<tr><td>instance</td><td></td></tr>
 						<tr><td>focused</td><td></td></tr>
 						<tr><td>clickable</td><td></td></tr>
 						<tr><td>selected</td><td></td></tr>
 						<tr><td>checked</td><td></td></tr>
 						<tr><td>checkable</td><td></td></tr>
-						<tr><td>package</td><td></td></tr>
-						<tr><td>bounds</td><td></td></tr>
 						<tr><td>enabled</td><td></td></tr>
-						<tr><td>xpath</td><td></td></tr>
 					  </tbody>
 					</table>
 			</div>
 			<div class="col-md-3">
-				<div style="margin-left:10px;margin-right:10px">
-					<span><a id="goback">返回</a></span><span style="margin:0 auto">
-					<a id="gohome">Home</a></span>
+				<div class="row" style="text-align:center">
+					<span class="col-xs-4"><a id="goback">Back</a></span>
+					<span class="col-xs-4"><a id="gohome">Home</a></span>
+					<span class="col-xs-4"><a id="gomenu">Menu</a></span>
 				</div>
-				<img id="screenshot" src={% if nodeDatas %}"static/images/current.png"{%else%}"static/images/black.png"{% endif %} alt="img" width="432" height="768"/>
+				<img id="screenshot" src={% if nodeDatas %}"static/images/current.png"{%else%}"static/images/mirror.jpg"{% endif %} alt="img" width="432" height="768"/>
 			</div>
 			<div class="col-md-5">
 				<button onclick="$('#nodeTreeView').treeview('expandAll')" class="btn btn-default">Expand All</button>
@@ -94,11 +85,45 @@ $(function() {
 			{
 				text: "点击",
 				func: function() {
-					$.get("/click/"+this.id,function(data){
-						if(!data.status){
-							layer.alert(data.info)
-						}else{
-							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+					elem_id = this.id
+					$(window.parent.document).find("#connect-info").empty().append("点击区域: "+nodeinfos[this.id]['bounds']+" ,等待响应....")
+					$.ajax({
+						type:"GET",
+						url:"/click/"+elem_id,
+						async:true,
+						error:function(request){
+							$(window.parent.document).find("#connect-info").append("操作失败: "+request.statusText+" "+request.status)
+						},
+						success:function(data){
+							if(!data.status){
+								layer.alert(data.info)
+							}else{
+								$(window.parent.document).find("#connect-info").append("完成")
+								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+							}
+						}
+					})
+				}
+			},
+			{
+				text: "刷新屏幕",
+				func: function() {
+					elem_id = this.id
+					$(window.parent.document).find("#connect-info").empty().append("刷新屏幕,等待响应....")
+					$.ajax({
+						type:"GET",
+						url:"/fresh",
+						async:true,
+						error:function(request){
+							$(window.parent.document).find("#connect-info").append("操作失败: "+request.statusText+" "+request.status)
+						},
+						success:function(data){
+							if(!data.status){
+								layer.alert(data.info)
+							}else{
+								$(window.parent.document).find("#connect-info").append("完成")
+								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+							}
 						}
 					})
 				}
@@ -115,10 +140,12 @@ $(function() {
 									title: '输入内容,并确认',
 									formType: 0
 								}, function(px){
+									$(window.parent.document).find("#connect-info").empty().append("向上滑动: "+px+"像素,等待响应....")
 									$.get("/swipe/up",{"id":id,"px":px},function(data){
 										if(!data.status){
 											layer.alert(data.info)
 										}else{
+											$(window.parent.document).find("#connect-info").append("完成")
 											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 										}
 									})
@@ -133,10 +160,12 @@ $(function() {
 									title: '输入内容,并确认',
 									formType: 0
 								}, function(px){
+									$(window.parent.document).find("#connect-info").empty().append("向下滑动: "+px+"像素,等待响应....")
 									$.get("/swipe/down",{"id":id,"px":px},function(data){
 										if(!data.status){
 											layer.alert(data.info)
 										}else{
+											$(window.parent.document).find("#connect-info").append("完成")
 											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 										}
 									})
@@ -151,10 +180,12 @@ $(function() {
 									title: '输入内容,并确认',
 									formType: 0
 								}, function(px){
+									$(window.parent.document).find("#connect-info").empty().append("向左滑动: "+px+"像素,等待响应....")
 									$.get("/swipe/left",{"id":id,"px":px},function(data){
 										if(!data.status){
 											layer.alert(data.info)
 										}else{
+											$(window.parent.document).find("#connect-info").append("完成")
 											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 										}
 									})
@@ -169,10 +200,12 @@ $(function() {
 									title: '输入内容,并确认',
 									formType: 0
 								}, function(px){
+									$(window.parent.document).find("#connect-info").empty().append("向右滑动: "+px+"像素,等待响应....")
 									$.get("/swipe/right",{"id":id,"px":px},function(data){
 										if(!data.status){
 											layer.alert(data.info)
 										}else{
+											$(window.parent.document).find("#connect-info").append("完成")
 											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 										}
 									})
@@ -189,10 +222,13 @@ $(function() {
 						title: '输入内容,并确认',
 						formType: 0
 					}, function(text){
+						$(".layui-layer-btn1").click()
+						$(window.parent.document).find("#connect-info").empty().append("输入内容: "+text+",等待响应....")
 						$.get("/sendtext/"+elem_id,{"text":text},function(data){
 							if(!data.status){
 								layer.alert("error:"+data.info)
 							}else{
+								$(window.parent.document).find("#connect-info").append("完成")
 								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 							}
 						})
@@ -203,10 +239,12 @@ $(function() {
 				text: "清空内容",
 				func: function() {
 					elem_id = this.id
+					$(window.parent.document).find("#connect-info").empty().append("清空内容,等待响应....")
 					$.get("/cleartext/"+elem_id,function(data){
 						if(!data.status){
 							layer.alert("error:"+data.info)
 						}else{
+							$(window.parent.document).find("#connect-info").append("完成")
 							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 						}
 					})
@@ -233,7 +271,7 @@ $(function() {
 			onNodeSelected: function(event, node) {
 				$("#nodebody").empty()
 				var id = node.id
-				var infos = ['package','enabled','checkable','checked','selected','clickable','focused','instance','password','long-clickable','scrollable','focusable','bounds','xpath','index','text','content-desc','class','resource-id']
+				var infos = ['enabled','checkable','checked','selected','clickable','focused','instance','password','long-clickable','scrollable','focusable','package','bounds','xpath','index','text','content-desc','class','resource-id']
 				nodeinfo = nodeinfos[id]
 				infos.forEach(function(key) {
 					$("#nodebody").prepend('<tr><td>'+key+'</td><td><input type="text" value="'+nodeinfo[key]+'" class="form-control"></input></td></tr>')
@@ -250,24 +288,41 @@ $(function() {
 	var $selectableTree = initSelectableTree();
 
 	$("#goback").click(function(){
+		$(window.parent.document).find("#connect-info").empty().append("按返回键,等待响应....")
 		$.get("/sendkeycode/4",function(data){
 			if(!data.status){
 				layer.alert("error:"+data.info)
 			}else{
+				$(window.parent.document).find("#connect-info").append("完成")
 				window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 			}
 		})
 	});
 
 	$("#gohome").click(function(){
+		$(window.parent.document).find("#connect-info").empty().append("按Home键,等待响应....")
 		$.get("/sendkeycode/3",function(data){
 			if(!data.status){
 				layer.alert("error:"+data.info)
 			}else{
+				$(window.parent.document).find("#connect-info").append("完成")
+				window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+			}
+		})
+	});
+
+	$("#gomenu").click(function(){
+		$(window.parent.document).find("#connect-info").empty().append("按Menu键,等待响应....")
+		$.get("/sendkeycode/1",function(data){
+			if(!data.status){
+				layer.alert("error:"+data.info)
+			}else{
+				$(window.parent.document).find("#connect-info").append("完成")
 				window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
 			}
 		})
 	})
+
 });
 
 

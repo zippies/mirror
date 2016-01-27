@@ -3,58 +3,56 @@
 <head>
 	<title>Test Report</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<!-- 新 Bootstrap 核心 CSS 文件 -->
-	<link rel="stylesheet" href="//cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css">
-	
-	<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
-	<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
-
-	<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
-	<script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-
+	<link rel="stylesheet" href="static/css/bootstrap.min.css">
+	<script src="static/js/jquery.min.js"></script>
+	<script src="static/js/bootstrap.min.js"></script>
 </head>
 <body>
 	<div class="container-fluid">
-		<div>
-		  <span>设备信息:</span><!--<span style="margin-left:20px"><button class="btn btn-warning">刷新状态</button></span>-->
-		  <table class="table table-bordered" style="margin-top:5px;width:50%;text-align:center">
-		  	{% if devices %}
-			  <thead>
-				<tr>
-				  <th style="width:30%;text-align:center">设备名称</th>
-				  <th style="width:20%;text-align:center">连接状态</th>
-				  <th style="width:50%;text-align:center">操作</th>
-				</tr>
-			  </thead>
-			  <tbody>
-			  
-				  {% for device in devices %}
-						<tr>
-							{% if device.state == 'device' %}
-								<td>{{ device.deviceName }}</td>
-								
-								<td>{% if isconnect %}操作中..{% else %}连接正常{% endif %}</td>
-								<td>
-									{% if isconnect %}
-										<button class="btn btn-danger disconnDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}">断开连接</button>
-									{% else %}
-										<button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" data-toggle="tooltip" data-placement="right" title="初始化可能较慢,请耐心等待">安装并启动app</button>
-									{% endif %}
-								</td>
-							{% elif device.state == 'unauthorized' %}
-								<td>{{ device.deviceName }}</td><td>未授权</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>未授权(unauthorized)</button></td>
-							{% elif device.state == 'offline' %}
-								<td>{{ device.deviceName }}</td><td>离线(offline)</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>离线(offline)</button></td>
-							{% endif %}
-						</tr>
-				  {% endfor %}
-			  {% else %}
-					<td>没有连接的设备</td>
-			  {% endif %}
-			  </tbody>
-		  </table>
+		<div class="row" style="height:120px">
+			<div class="col-xs-5" style="align:center">
+				<label>设备信息:</label>
+				<table class="table table-bordered" style="width:100%;text-align:center">
+					{% if devices %}
+				  <thead>
+					<tr>
+					  <th style="width:30%;text-align:center">设备名称</th>
+					  <th style="width:20%;text-align:center">连接状态</th>
+					  <th style="width:50%;text-align:center">操作</th>
+					</tr>
+				  </thead>
+				  <tbody>
+				  
+					  {% for device in devices %}
+							<tr>
+								{% if device.state == 'device' %}
+									<td>{{ device.deviceName }}</td>
+									
+									<td>{% if isconnect %}操作中..{% else %}连接正常{% endif %}</td>
+									<td>
+										<button class="btn btn-danger disconnDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" {% if not isconnect %}style="display:none"{% endif %}>断开连接</button>
+									
+										<button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" data-toggle="tooltip" data-placement="right" title="初始化可能较慢,请耐心等待" {% if isconnect %}style="display:none"{% endif %}>安装并启动app</button>
+									</td>
+								{% elif device.state == 'unauthorized' %}
+									<td>{{ device.deviceName }}</td><td>未授权</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>未授权(unauthorized)</button></td>
+								{% elif device.state == 'offline' %}
+									<td>{{ device.deviceName }}</td><td>离线(offline)</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>离线(offline)</button></td>
+								{% endif %}
+							</tr>
+					  {% endfor %}
+				  {% else %}
+						<td>没有连接的设备</td>
+				  {% endif %}
+				  </tbody>
+				</table>
+			</div>
+			<div class="col-xs-7">
+				<label>连接信息:</label>
+				<textarea id="connect-info" style="background-color:black;width:100%;height:90px;color:yellow;padding:4px" ></textarea>
+			</div>
 		</div>
-		<div class="row" style="margin-top:30px;">
+		<div class="row">
             <iframe id="devicecontainer" align="center" width="100%" src="/getscreen" frameborder="no" border="0" marginwidth="0" marginheight="0" height="2000" scrolling="no">
             </iframe>
 		</div>
@@ -63,61 +61,95 @@
 <script language="javascript">
 	$(function() {
 		$(".connectDevice").click(function() {
+			//refreshframe("devicecontainer");
+			$(this).attr("disabled",true)
+			$("#connect-info").empty().append("正在启动appium...\r\n")
 			var deviceName = this.name
 			var replacedName = this.id
-			$("#"+replacedName).attr("disabled", true).removeClass("btn-default").addClass("btn-warning").html("正在连接")
+			$(".connectDevice").attr("disabled", true).removeClass("btn-default").addClass("btn-warning").html("正在连接")
 			$.post("/connect/"+deviceName,function(data) {
-				console.log("123")
 				isAppiumReady(deviceName,replacedName)
+				$("#"+replacedName).attr("disabled",false)
 			})
 		});
 
 		$(".disconnDevice").click(function(){
-			$.get("/disconnect",function(data) {
-				if(data == "ok") {
-					location.reload(true)
+			$("#connect-info").append("正在断开连接...")
+			$.ajax({
+				type: "GET",
+				url: "/disconnect",
+				async: true,
+				error: function(request) {
+					console.log(request)
+					$("#connect-info").empty().append(request.statusText + " " + request.status)
+				},
+				success: function(data) {
+					
+					if(data.status) {
+						$("#connect-info").empty().append("断开成功！")
+						$(".connectDevice").show()
+						$(".disconnDevice").hide()
+						document.getElementById('devicecontainer').contentWindow.location.reload(true);
+					}else{
+						$(".connectDevice").show().removeClass("btn-success").addClass("btn-warning").html("重新连接")
+						$(".disconnDevice").hide()
+						$("#connect-info").empty().append("断开失败："+data.info)
+					}
 				}
 			})
 		})
 
 		$('[data-toggle="tooltip"]').tooltip()
+
 	})
 
 
 	var ts = new Array();
 	var appium_not_ready = true;
 
-	function isAppiumReady(deviceName,replacedName){ 
+	function isAppiumReady(deviceName,replacedName){
 		var interval_id = window.setInterval(function() {
 			$.get("/isappiumready",function(data) {
 				if (data.status) {
+					$("#connect-info").empty().append(data.info+"\r\n")
 					window.clearInterval(interval_id)
 					if(appium_not_ready){
 						appium_not_ready = false
+						$("#connect-info").append("正在启动app..."+"\r\n")
 						$.ajax({
 							cache: false,
 							type: "POST",
 							url:"/getscreen",
 							data:{"devicename":deviceName},
-							async: false,
+							async: true,
 							error: function(request) {
 								$("#"+replacedName).removeClass("btn-default").addClass("btn-warning").html("连接失败,点击重试")
-								alert("Connection error");
+								$("#connect-info").empty().append("connection error");
 							},
 							success: function(data) {
-								if(data == 'ok'){
-									$("#waitting").hide()
-									location.reload(true)
-									//document.getElementById('devicecontainer').contentWindow.location.reload(true);
-								}
+								$("#connect-info").append("启动成功！"+"\r\n")
+								$(".connectDevice").attr("disabled",false).removeClass("btn-warning").addClass("btn-default").html("安装并启动app").hide()
+								$(".disconnDevice").show()
+								$(".tooltip").hide()
+								document.getElementById('devicecontainer').contentWindow.location.reload(true);
 							}
 						});
 					}
 				}else{
-					
+					$("#connect-info").append(data.info+"\r\n")
 				}
 			})
-		},1000)
+		},1200)
+	}
+
+	function refreshframe(framename){
+		frame_doc = $(document.getElementById('devicecontainer').contentDocument)
+		$.get("/getdata",function(data){
+			nodeDatas = data.nodeDatas
+			nodeinfos = data.nodeinfos
+			frameinfos = data.frameinfos
+			console.log(nodeDatas)
+		})
 	}
 </script>
 </body>

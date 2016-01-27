@@ -4,6 +4,7 @@
 from flask import Flask,render_template,request,url_for,jsonify,redirect
 from multiprocessing import Process
 from xml.dom import minidom
+from flask_socketio import SocketIO,send,emit
 from config import debug,port,apk,device_info
 from datetime import datetime
 from subprocess import Popen,PIPE
@@ -11,6 +12,7 @@ from main.basecase import AndroidDevice
 import os,json,re,platform,requests,time,signal,sys,copy
 
 app = Flask(__name__)
+sockets = SocketIO(app)
 _id = 0
 appium_port = 14111
 bootstrap_port = 14112
@@ -21,6 +23,19 @@ nodeinfos = {}
 frameinfos = {}
 reversedframe = False
 reverseframe = {}
+
+@sockets.on("connect")
+def onconnect():
+	print("[one client connected]")
+
+@sockets.on_error()
+def ondisconnect(e):
+	print("[one client disconnect]")
+
+
+@sockets.on("error")
+def onerror():
+	pass
 
 def getChildNodes(node):
 	nodes = [n for n in node.childNodes if n.nodeName !='#text']
@@ -211,10 +226,16 @@ def connectDevice(devicename):
 @app.route("/disconnect")
 def disconnect():
 	global driver
-	driver.quit()
+	resp = {"status":True,"info":"disconnect success!"}
+	try:
+		driver.quit()
+	except Exception as e:
+		resp["status"] = False
+		resp["info"] = str(e)
+
 	driver = None
 	stopAppium()
-	return "ok"
+	return jsonify(resp)
 
 @app.route("/isappiumready")
 def isAppiumReady():
@@ -245,7 +266,7 @@ def swipe(direction):
 	else:
 		resp = {"status":False,"info":"No such direction:%s" %direction}
 
-	if end_x < driver.device_width and end_y < driver.device_height:
+	if 0 < end_x < driver.device_width and 0 < end_y < driver.device_height:
 		driver.swipe((start_x,start_y),(end_x,end_y))
 		freshScreen()
 	else:
@@ -257,12 +278,9 @@ def click(id):
 	global driver,frameinfos
 	resp = {"status":True,"info":None}
 	elem = frameinfos.get(int(id))
-
 	try:
 		x,y = round((elem['x1']+round(elem['width']/2))/0.4),round((elem['y1']+round(elem['height']/2))/0.4)
-		print("click at:",x,y)
 		driver.click_point(x,y)
-		print("click end")
 		freshScreen()
 	except Exception as e:
 		resp["status"] = False
@@ -324,6 +342,13 @@ def back(code):
 
 	return jsonify(resp)
 
+@app.route("/fresh")
+def fresh():
+	resp = {"status":True,"info":None}
+	freshScreen(0)
+	return jsonify(resp)
+
+
 def getAppInfo(apk):
 	cmd_activity = "aapt d badging %s|findstr launchable-activity" %apk
 	cmd_package = "aapt d badging %s|findstr package" %apk
@@ -335,14 +360,11 @@ def getAppInfo(apk):
 	package.kill()
 	return (package_name,activity_name)
 
-def freshScreen():
+def freshScreen(seconds=2):
 	global _id,driver,nodeDatas,nodeinfos,frameinfos
 	_id = 0
-	print("fresh begin")
 	nodeDatas,nodeinfos,frameinfos = [],{},{}
-	print("save screen begin")
-	driver.save_screen(os.path.join(os.getcwd(),'static','images',"current.png"))
-	print("save screen end")
+	driver.save_screen(os.path.join(os.getcwd(),'static','images',"current.png"),seconds=seconds)
 	page_source = driver.page_source
 	page_source = re.sub("[\x00-\x08\x0b-\x0c\x0e-\x1f]+",u"",page_source)
 	try:
@@ -354,7 +376,33 @@ def freshScreen():
 		if node.nodeName != "#text":
 			datadict = getNodes(i+1,root,nodeinfos,frameinfos)
 			nodeDatas.append(datadict)
-	print("fresh end")
+
+@app.route("/showcloser")
+def showCloser():
+	global frameinfos,reverseframe,reversedframe
+	x,y = request.args.get('x'),request.args.get('y')
+	closer = 0
+	minner = 100000000
+	frame = frameinfos if not reversedframe else reverseframe
+	for i,v in frame.items():
+		if i and v and v['x1']<int(x)<v['x1']+v['width'] and v['y1']<int(y)<v['y1']+v['height']:
+			if v['width']*v['height'] < minner:
+				minner =  v['width'] * v['height'] 
+				closer = i
+
+	return str(closer)
+
+@app.route("/getdata")
+def getdata():
+	global nodeDatas,nodeinfos,frameinfos
+	nodeDatas = {"1":2}
+	resp = {
+		"nodeDatas":nodeDatas,
+		"nodeinfos":nodeinfos,
+		"frameinfos":frameinfos
+	}
+
+	return jsonify(resp)
 
 @app.route('/getscreen',methods=["GET","POST"])
 def getScreen():
@@ -371,21 +419,21 @@ def getScreen():
 
 	if request.method == "POST":
 		devicename = request.args.get("devicename")
-		capabilities = {}
-		capabilities['app'] = apk
 		packageName,main_activity = getAppInfo(apk)
-		capabilities["appPackage"] = packageName
-		capabilities["appActivity"] = main_activity
-		capabilities["newCommandTimeout"] = 1800
-		capabilities["noSign"] = True
-		capabilities["unicodeKeyboard"] = True
-		capabilities["resetKeyboard"] = True
-		capabilities["deviceName"] = devicename
-		capabilities["platformName"] = device_info[device]['platformName'] if devicename in device_info.keys() else "Android"
-		capabilities["platformVersion"] = device_info[device]['platformVersion'] if devicename in device_info.keys() else "4.4"
+		capabilities = {
+				"app":apk,
+				"appPackage":packageName,
+				"appActivity":main_activity,
+				"newCommandTimeout":1800,
+				"noSign":True,
+				"unicodeKeyboard":True,
+				"resetKeyboard":True,
+				"deviceName":devicename,
+				"platformName":device_info[device]['platformName'] if devicename in device_info.keys() else "Android",
+				"platformVersion":device_info[device]['platformVersion'] if devicename in device_info.keys() else "4.4"
+		}
 
 		driver = AndroidDevice("http://localhost:%s/wd/hub" %appium_port,capabilities)
-		driver.sleep(4)
 		freshScreen()
 		return "ok"
 
@@ -394,22 +442,7 @@ def getScreen():
 							nodeDatas=nodeDatas,
 							nodeinfos=nodeinfos,
 							frameinfos=frameinfos if not reversedframe else reverseframe
-	)
-
-@app.route("/showcloser")
-def showCloser():
-	global frameinfos,reverseframe,reversedframe
-	x,y = request.args.get('x'),request.args.get('y')
-	closer = 0
-	minner = 100000000
-	frame = frameinfos if not reversedframe else reverseframe
-	for i,v in frame.items():
-		if i and v and v['x1']<int(x)<v['x1']+v['width'] and v['y1']<int(y)<v['y1']+v['height']:
-			if v['width']*v['height'] < minner:
-				minner =  v['width'] * v['height'] 
-				closer = i
-
-	return str(closer)
+						)
 
 @app.route('/')
 def index():

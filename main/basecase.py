@@ -95,9 +95,8 @@ class AndroidDevice(webdriver.Remote):
 		action.perform()
 		return self
 
-	def save_screen(self,filename,immediate=False):
-		if not immediate:
-			self.sleep(1.5)
+	def save_screen(self,filename,seconds):
+		self.sleep(seconds)
 		self.get_screenshot_as_file(filename)
 
 	def input(self,by,value,text,desc="",nocheck=False):
