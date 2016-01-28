@@ -13,7 +13,7 @@
 	<script type="text/javascript" src="static/js/jquery-smartMenu.js"></script>
 	<script type="text/javascript" src="static/js/layer.js"></script>
 </head>
-<body>
+<body style="background-color:#EAEAEA">
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-md-4">
@@ -47,18 +47,19 @@
 					  </tbody>
 					</table>
 			</div>
-			<div class="col-md-3">
-				<div class="row" style="text-align:center">
-					<span class="col-xs-4"><a id="goback">Back</a></span>
-					<span class="col-xs-4"><a id="gohome">Home</a></span>
-					<span class="col-xs-4"><a id="gomenu">Menu</a></span>
-				</div>
+			<div class="col-md-4">
+				<div id="imgarea" class="row" style="text-align:center">
+					<span class="col-xs-5"><a href="javascript:;" id="goback">Back</a></span>
+					<span class="col-xs-2"><a href="javascript:;" id="gohome">Home</a></span>
+					<span class="col-xs-5"><a href="javascript:;" id="gomenu">Menu</a></span>
 				<img id="screenshot" src={% if nodeDatas %}"static/images/current.png"{%else%}"static/images/mirror.jpg"{% endif %} alt="img" width="432" height="768"/>
+				</div>
+
 			</div>
-			<div class="col-md-5">
-				<button onclick="$('#nodeTreeView').treeview('expandAll')" class="btn btn-default">Expand All</button>
-				<button onclick="$('#nodeTreeView').treeview('collapseAll')" class="btn btn-default">Collapse All</button>
-				<div id="nodeTreeView" style="height:300px">
+			<div class="col-md-4">
+				<button onclick="$('#nodeTreeView').treeview('expandAll')" class="btn btn-default">展开所有(Expand All)</button>
+				<button onclick="$('#nodeTreeView').treeview('collapseAll')" class="btn btn-default">收起所有(Collapse All)</button>
+				<div id="nodeTreeView" style="margin-top:5px;height:300px">
 				</div>
 			</div>
 		</div>
@@ -66,235 +67,16 @@
 	
 <script type="text/javascript">
 $(function() {
-	var nodeData = {{ nodeDatas|tojson|safe }}
-	var nodeinfos = {{ nodeinfos|tojson|safe }}
-	var frameinfos = {{ frameinfos|safe }}
-	var notes = new Array()
-	
-	layer.config({
-		extend: 'extend/layer.ext.js'
-	});
-	for(var k in frameinfos) {
-		notes[k] = frameinfos[k]
-	}
-	
-	$('#screenshot').imgNotes(notes);
-
-	var imageMenuData = [
-		[
-			{
-				text: "点击",
-				func: function() {
-					elem_id = this.id
-					$(window.parent.document).find("#connect-info").empty().append("点击区域: "+nodeinfos[this.id]['bounds']+" ,等待响应....")
-					$.ajax({
-						type:"GET",
-						url:"/click/"+elem_id,
-						async:true,
-						error:function(request){
-							$(window.parent.document).find("#connect-info").append("操作失败: "+request.statusText+" "+request.status)
-						},
-						success:function(data){
-							if(!data.status){
-								layer.alert(data.info)
-							}else{
-								$(window.parent.document).find("#connect-info").append("完成")
-								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-							}
-						}
-					})
-				}
-			},
-			{
-				text: "刷新屏幕",
-				func: function() {
-					elem_id = this.id
-					$(window.parent.document).find("#connect-info").empty().append("刷新屏幕,等待响应....")
-					$.ajax({
-						type:"GET",
-						url:"/fresh",
-						async:true,
-						error:function(request){
-							$(window.parent.document).find("#connect-info").append("操作失败: "+request.statusText+" "+request.status)
-						},
-						success:function(data){
-							if(!data.status){
-								layer.alert(data.info)
-							}else{
-								$(window.parent.document).find("#connect-info").append("完成")
-								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-							}
-						}
-					})
-				}
-			},
-			{
-				text: "滑动元素",
-				data:
-					[[
-						{
-							text: "向上滑动",
-							func: function() {
-								var id = this.id
-								layer.prompt({
-									title: '输入内容,并确认',
-									formType: 0
-								}, function(px){
-									$(window.parent.document).find("#connect-info").empty().append("向上滑动: "+px+"像素,等待响应....")
-									$.get("/swipe/up",{"id":id,"px":px},function(data){
-										if(!data.status){
-											layer.alert(data.info)
-										}else{
-											$(window.parent.document).find("#connect-info").append("完成")
-											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-										}
-									})
-								});
-							}
-						},
-						{
-							text: "向下滑动",
-							func: function() {
-								var id = this.id
-								layer.prompt({
-									title: '输入内容,并确认',
-									formType: 0
-								}, function(px){
-									$(window.parent.document).find("#connect-info").empty().append("向下滑动: "+px+"像素,等待响应....")
-									$.get("/swipe/down",{"id":id,"px":px},function(data){
-										if(!data.status){
-											layer.alert(data.info)
-										}else{
-											$(window.parent.document).find("#connect-info").append("完成")
-											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-										}
-									})
-								});
-							}
-						},
-						{
-							text: "向左滑动",
-							func: function() {
-								var id = this.id
-								layer.prompt({
-									title: '输入内容,并确认',
-									formType: 0
-								}, function(px){
-									$(window.parent.document).find("#connect-info").empty().append("向左滑动: "+px+"像素,等待响应....")
-									$.get("/swipe/left",{"id":id,"px":px},function(data){
-										if(!data.status){
-											layer.alert(data.info)
-										}else{
-											$(window.parent.document).find("#connect-info").append("完成")
-											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-										}
-									})
-								});
-							}
-						},
-						{
-							text: "向右滑动",
-							func: function() {
-								var id = this.id
-								layer.prompt({
-									title: '输入内容,并确认',
-									formType: 0
-								}, function(px){
-									$(window.parent.document).find("#connect-info").empty().append("向右滑动: "+px+"像素,等待响应....")
-									$.get("/swipe/right",{"id":id,"px":px},function(data){
-										if(!data.status){
-											layer.alert(data.info)
-										}else{
-											$(window.parent.document).find("#connect-info").append("完成")
-											window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-										}
-									})
-								});
-							}
-						}
-					]]
-			},
-			{
-				text: "输入内容",
-				func: function() {
-					elem_id = this.id
-					layer.prompt({
-						title: '输入内容,并确认',
-						formType: 0
-					}, function(text){
-						$(".layui-layer-btn1").click()
-						$(window.parent.document).find("#connect-info").empty().append("输入内容: "+text+",等待响应....")
-						$.get("/sendtext/"+elem_id,{"text":text},function(data){
-							if(!data.status){
-								layer.alert("error:"+data.info)
-							}else{
-								$(window.parent.document).find("#connect-info").append("完成")
-								window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-							}
-						})
-					});
-				}
-			},
-			{
-				text: "清空内容",
-				func: function() {
-					elem_id = this.id
-					$(window.parent.document).find("#connect-info").empty().append("清空内容,等待响应....")
-					$.get("/cleartext/"+elem_id,function(data){
-						if(!data.status){
-							layer.alert("error:"+data.info)
-						}else{
-							$(window.parent.document).find("#connect-info").append("完成")
-							window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
-						}
-					})
-				}
-			}
-		],
-		[
-			{
-				text: "取消选择",
-				func: function() {
-					$("#"+this.id).hide()
-				}
-			}
-		]
-	];
-
-	$(".note").smartMenu(imageMenuData);
-	
-	var initSelectableTree = function() {
-		return $('#nodeTreeView').treeview({
-			data: nodeData,
-			showBorder: false,
-			showTags: true,
-			onNodeSelected: function(event, node) {
-				$("#nodebody").empty()
-				var id = node.id
-				var infos = ['enabled','checkable','checked','selected','clickable','focused','instance','password','long-clickable','scrollable','focusable','package','bounds','xpath','index','text','content-desc','class','resource-id']
-				nodeinfo = nodeinfos[id]
-				infos.forEach(function(key) {
-					$("#nodebody").prepend('<tr><td>'+key+'</td><td><input type="text" value="'+nodeinfo[key]+'" class="form-control"></input></td></tr>')
-					$("#"+id).show();
-				})
-			},
-			onNodeUnselected:function(event,node) {
-				var id = node.id;
-				$("#"+id).hide();
-			}
-		});
-	};
-	
-	var $selectableTree = initSelectableTree();
-
+	initSelectableTree(true)
 	$("#goback").click(function(){
 		$(window.parent.document).find("#connect-info").empty().append("按返回键,等待响应....")
 		$.get("/sendkeycode/4",function(data){
 			if(!data.status){
+				$(window.parent.document).find("#connect-info").append("\r\n操作失败:appium已断开,请重启服务！")
 				layer.alert("error:"+data.info)
 			}else{
 				$(window.parent.document).find("#connect-info").append("完成")
-				window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+				initSelectableTree()
 			}
 		})
 	});
@@ -303,10 +85,11 @@ $(function() {
 		$(window.parent.document).find("#connect-info").empty().append("按Home键,等待响应....")
 		$.get("/sendkeycode/3",function(data){
 			if(!data.status){
+				$(window.parent.document).find("#connect-info").append("\r\n操作失败:appium已断开,请重启服务！")
 				layer.alert("error:"+data.info)
 			}else{
 				$(window.parent.document).find("#connect-info").append("完成")
-				window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+				initSelectableTree()
 			}
 		})
 	});
@@ -315,16 +98,250 @@ $(function() {
 		$(window.parent.document).find("#connect-info").empty().append("按Menu键,等待响应....")
 		$.get("/sendkeycode/1",function(data){
 			if(!data.status){
+				$(window.parent.document).find("#connect-info").append("\r\n操作失败:appium已断开,请重启服务！")
 				layer.alert("error:"+data.info)
 			}else{
 				$(window.parent.document).find("#connect-info").append("完成")
-				window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+				initSelectableTree()
 			}
 		})
 	})
 
 });
 
+	function initSelectableTree(isinit) {
+		$("#screenshot").remove()
+		$("#imgarea").append('<img id="screenshot" alt="img" width="432" height="768" src="/static/images/current.png?temp='+Math.random()+'" >')
+
+		$(".note").remove()
+		$(".notep").remove()
+		$("#nodeTreeView").empty()
+
+		$.get("/getdata",function(data){
+			nodeData = data.nodeDatas
+			nodeinfos = data.nodeinfos
+			frameinfos = data.frameinfos
+			var notes = new Array()
+
+			layer.config({
+				extend: 'extend/layer.ext.js'
+			});
+			for(var k in frameinfos) {
+				notes[k] = frameinfos[k]
+			}
+			
+			$('#screenshot').imgNotes(notes);
+
+			var imageMenuData = [
+				[
+					{
+						text: "点击",
+						func: function() {
+							elem_id = this.id
+							$(window.parent.document).find("#connect-info").empty().append("点击区域: "+nodeinfos[this.id]['bounds']+" ,等待响应....")
+							$.ajax({
+								type:"GET",
+								url:"/click/"+elem_id,
+								async:true,
+								error:function(request){
+									$(window.parent.document).find("#connect-info").append("操作失败: "+request.statusText+" "+request.status)
+								},
+								success:function(data){
+									if(!data.status){
+										layer.alert(data.info)
+									}else{
+										$(window.parent.document).find("#connect-info").append("完成")
+										initSelectableTree()
+										//window.parent.frames["devicecontainer"].contentWindow.location.reload(true);
+									}
+								}
+							})
+						}
+					},
+					{
+						text: "刷新屏幕",
+						func: function() {
+							elem_id = this.id
+							$(window.parent.document).find("#connect-info").empty().append("刷新屏幕,等待响应....")
+							$.ajax({
+								type:"GET",
+								url:"/fresh",
+								async:true,
+								error:function(request){
+									$(window.parent.document).find("#connect-info").append("操作失败: "+request.statusText+" "+request.status)
+								},
+								success:function(data){
+									if(!data.status){
+										layer.alert(data.info)
+									}else{
+										$(window.parent.document).find("#connect-info").append("完成")
+										initSelectableTree()
+									}
+								}
+							})
+						}
+					},
+					{
+						text: "滑动元素",
+						data:
+							[[
+								{
+									text: "向上滑动",
+									func: function() {
+										var id = this.id
+										layer.prompt({
+											title: '输入内容,并确认',
+											formType: 0
+										}, function(px){
+											$(".layui-layer-btn1").click()
+											$(window.parent.document).find("#connect-info").empty().append("向上滑动: "+px+"像素,等待响应....")
+											$.get("/swipe/up",{"id":id,"px":px},function(data){
+												if(!data.status){
+													layer.alert(data.info)
+												}else{
+													$(window.parent.document).find("#connect-info").append("完成")
+													initSelectableTree()
+												}
+											})
+										});
+									}
+								},
+								{
+									text: "向下滑动",
+									func: function() {
+										var id = this.id
+										layer.prompt({
+											title: '输入内容,并确认',
+											formType: 0
+										}, function(px){
+											$(".layui-layer-btn1").click()
+											$(window.parent.document).find("#connect-info").empty().append("向下滑动: "+px+"像素,等待响应....")
+											$.get("/swipe/down",{"id":id,"px":px},function(data){
+												if(!data.status){
+													layer.alert(data.info)
+												}else{
+													$(window.parent.document).find("#connect-info").append("完成")
+													initSelectableTree()
+												}
+											})
+										});
+									}
+								},
+								{
+									text: "向左滑动",
+									func: function() {
+										var id = this.id
+										layer.prompt({
+											title: '输入内容,并确认',
+											formType: 0
+										}, function(px){
+											$(".layui-layer-btn1").click()
+											$(window.parent.document).find("#connect-info").empty().append("向左滑动: "+px+"像素,等待响应....")
+											$.get("/swipe/left",{"id":id,"px":px},function(data){
+												if(!data.status){
+													layer.alert(data.info)
+												}else{
+													$(window.parent.document).find("#connect-info").append("完成")
+													initSelectableTree()
+												}
+											})
+										});
+									}
+								},
+								{
+									text: "向右滑动",
+									func: function() {
+										var id = this.id
+										layer.prompt({
+											title: '输入内容,并确认',
+											formType: 0
+										}, function(px){
+											$(".layui-layer-btn1").click()
+											$(window.parent.document).find("#connect-info").empty().append("向右滑动: "+px+"像素,等待响应....")
+											$.get("/swipe/right",{"id":id,"px":px},function(data){
+												if(!data.status){
+													layer.alert(data.info)
+												}else{
+													$(window.parent.document).find("#connect-info").append("完成")
+													initSelectableTree()
+												}
+											})
+										});
+									}
+								}
+							]]
+					},
+					{
+						text: "输入内容",
+						func: function() {
+							elem_id = this.id
+							layer.prompt({
+								title: '输入内容,并确认',
+								formType: 0
+							}, function(text){
+								$(".layui-layer-btn1").click()
+								$(window.parent.document).find("#connect-info").empty().append("输入内容: "+text+",等待响应....")
+								$.get("/sendtext/"+elem_id,{"text":text},function(data){
+									if(!data.status){
+										layer.alert("error:"+data.info)
+									}else{
+										$(window.parent.document).find("#connect-info").append("完成")
+										initSelectableTree()
+									}
+								})
+							});
+						}
+					},
+					{
+						text: "清空内容",
+						func: function() {
+							elem_id = this.id
+							$(window.parent.document).find("#connect-info").empty().append("清空内容,等待响应....")
+							$.get("/cleartext/"+elem_id,function(data){
+								if(!data.status){
+									layer.alert("error:"+data.info)
+								}else{
+									$(window.parent.document).find("#connect-info").append("完成")
+									initSelectableTree()
+								}
+							})
+						}
+					}
+				],
+				[
+					{
+						text: "取消选择",
+						func: function() {
+							$("#"+this.id).hide()
+						}
+					}
+				]
+			];
+
+			$(".note").smartMenu(imageMenuData);
+
+			$('#nodeTreeView').treeview({
+				data: nodeData,
+				showBorder: false,
+				showTags: true,
+				onNodeSelected: function(event, node) {
+					$("#nodebody").empty()
+					var id = node.id
+					var infos = ['enabled','checkable','checked','selected','clickable','focused','instance','password','long-clickable','scrollable','focusable','package','bounds','xpath','index','text','content-desc','class','resource-id']
+					nodeinfo = nodeinfos[id]
+					infos.forEach(function(key) {
+						$("#nodebody").prepend('<tr><td>'+key+'</td><td><input type="text" value="'+nodeinfo[key]+'" class="form-control"></input></td></tr>')
+						$("#"+id).show();
+					})
+				},
+				onNodeUnselected:function(event,node) {
+					var id = node.id;
+					$("#"+id).hide();
+				}
+			});
+		});
+
+	};
 
 </script>
 </body>

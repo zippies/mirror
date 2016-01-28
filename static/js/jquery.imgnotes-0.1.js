@@ -17,7 +17,6 @@
 			var eve = e || window.event;
 			var x = parseInt(eve.clientX) - parseInt(imgOffset.left);
 			var y = parseInt(eve.clientY) - parseInt(imgOffset.top);
-
 			$.get("/showcloser",{"x":x,"y":y},function(em) {
 				if(em != "0"){
 					$("#"+em).show();
@@ -26,7 +25,6 @@
 				}
 			})
 		})
-	
 	} 
 	
 	function appendnote(note_data){

@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 #autor: chao.chen
 #datetime: 2016-01-26
-from flask import Flask,render_template,request,url_for,jsonify,redirect
+from flask import Flask,render_template,request,jsonify
 from multiprocessing import Process
 from xml.dom import minidom
-from flask_socketio import SocketIO,send,emit
 from config import debug,port,apk,device_info
 from datetime import datetime
 from subprocess import Popen,PIPE
 from main.basecase import AndroidDevice
-import os,json,re,platform,requests,time,signal,sys,copy
+import os,json,re,platform,requests,copy
 
 app = Flask(__name__)
-sockets = SocketIO(app)
 _id = 0
 appium_port = 14111
 bootstrap_port = 14112
@@ -23,19 +21,6 @@ nodeinfos = {}
 frameinfos = {}
 reversedframe = False
 reverseframe = {}
-
-@sockets.on("connect")
-def onconnect():
-	print("[one client connected]")
-
-@sockets.on_error()
-def ondisconnect(e):
-	print("[one client disconnect]")
-
-
-@sockets.on("error")
-def onerror():
-	pass
 
 def getChildNodes(node):
 	nodes = [n for n in node.childNodes if n.nodeName !='#text']
@@ -194,6 +179,7 @@ def stopAppium():
 	'''
 		关闭所有appium服务
 	'''
+	driver = None
 	if platform.system() == 'Windows':
 		os.system("taskkill /F /IM node.exe")
 	else:
@@ -229,12 +215,11 @@ def disconnect():
 	resp = {"status":True,"info":"disconnect success!"}
 	try:
 		driver.quit()
-	except Exception as e:
+		stopAppium()
+	except:
 		resp["status"] = False
-		resp["info"] = str(e)
+		resp["info"] = "appium已断开连接,请重新连接"
 
-	driver = None
-	stopAppium()
 	return jsonify(resp)
 
 @app.route("/isappiumready")
@@ -267,8 +252,12 @@ def swipe(direction):
 		resp = {"status":False,"info":"No such direction:%s" %direction}
 
 	if 0 < end_x < driver.device_width and 0 < end_y < driver.device_height:
-		driver.swipe((start_x,start_y),(end_x,end_y))
-		freshScreen()
+		try:
+			driver.swipe((start_x,start_y),(end_x,end_y))
+			freshScreen()
+		except:
+			resp["status"] = False
+			resp["info"] = "长时间无操作,appium已断开连接,请重新启动"
 	else:
 		resp = {"status":False,"info":"swipe out of device screen"}
 	return jsonify(resp)
@@ -282,9 +271,9 @@ def click(id):
 		x,y = round((elem['x1']+round(elem['width']/2))/0.4),round((elem['y1']+round(elem['height']/2))/0.4)
 		driver.click_point(x,y)
 		freshScreen()
-	except Exception as e:
+	except:
 		resp["status"] = False
-		resp["info"] = str(e)
+		resp["info"] = "长时间无操作,appium已断开连接,请重新启动"
 	
 	return jsonify(resp)
 
@@ -302,9 +291,9 @@ def sendText(id):
 		else:
 			resp["status"] = False
 			resp["info"] = "Make sure this element has an id"
-	except Exception as e:
+	except:
 		resp["status"] = False
-		resp["info"] = str(e)
+		resp["info"] = "长时间无操作,appium已断开连接,请重新启动"
 
 	return jsonify(resp)
 
@@ -323,9 +312,9 @@ def clearText(id):
 		else:
 			resp["status"] = False
 			resp["info"] = "Make sure this element has an id"
-	except Exception as e:
+	except:
 		resp["status"] = False
-		resp["info"] = str(e)
+		resp["info"] = "长时间无操作,appium已断开连接,请重新启动"
 
 	return jsonify(resp)
 
@@ -336,16 +325,21 @@ def back(code):
 	try:
 		driver.press_keycode(code)
 		freshScreen()
-	except Exception as e:
+	except:
 		resp["status"] = False
-		resp["info"] = str(e)
+		resp["info"] = "长时间无操作,appium已断开连接,请重新启动"
 
 	return jsonify(resp)
 
 @app.route("/fresh")
 def fresh():
 	resp = {"status":True,"info":None}
-	freshScreen(0)
+	try:
+		freshScreen(0)
+	except:
+		resp["status"] = False
+		resp["info"] = "长时间无操作,appium已断开连接,请重新启动"
+
 	return jsonify(resp)
 
 
@@ -395,7 +389,6 @@ def showCloser():
 @app.route("/getdata")
 def getdata():
 	global nodeDatas,nodeinfos,frameinfos
-	nodeDatas = {"1":2}
 	resp = {
 		"nodeDatas":nodeDatas,
 		"nodeinfos":nodeinfos,
@@ -424,7 +417,7 @@ def getScreen():
 				"app":apk,
 				"appPackage":packageName,
 				"appActivity":main_activity,
-				"newCommandTimeout":1800,
+				"newCommandTimeout":86400,
 				"noSign":True,
 				"unicodeKeyboard":True,
 				"resetKeyboard":True,

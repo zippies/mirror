@@ -18,11 +18,6 @@ a web tool to replace the uiautomatorviewer(just for android)
 	4、打开浏览器，访问：http://localhost:8088
 
 
-version note:
-
-	第一个版本,凑合着用,所有前端的请求都是同步的,每个事件(click等)的请求都会等待2秒再返回,所以响应比较慢的请求浏览器会让你觉得卡住了,其实等几秒会自动刷新,下个版本改成异步通信以及改善下用户体验
-
-
 主要功能：
 
 	1、支持uiautomatorview有关屏幕信息的获取、控件元素信息的查看等功能

@@ -7,7 +7,7 @@
 	<script src="static/js/jquery.min.js"></script>
 	<script src="static/js/bootstrap.min.js"></script>
 </head>
-<body>
+<body style="background-color:#EAEAEA">
 	<div class="container-fluid">
 		<div class="row" style="height:120px">
 			<div class="col-xs-5" style="align:center">
@@ -52,8 +52,9 @@
 				<textarea id="connect-info" style="background-color:black;width:100%;height:90px;color:yellow;padding:4px" ></textarea>
 			</div>
 		</div>
+		<hr>
 		<div class="row">
-            <iframe id="devicecontainer" align="center" width="100%" src="/getscreen" frameborder="no" border="0" marginwidth="0" marginheight="0" height="2000" scrolling="no">
+            <iframe id="devicecontainer" name="devicecontainer" align="center" width="100%" src="/getscreen" frameborder="no" border="0" marginwidth="0" marginheight="0" height="2000" scrolling="no">
             </iframe>
 		</div>
 	</div>
@@ -84,12 +85,11 @@
 					$("#connect-info").empty().append(request.statusText + " " + request.status)
 				},
 				success: function(data) {
-					
 					if(data.status) {
 						$("#connect-info").empty().append("断开成功！")
 						$(".connectDevice").show()
 						$(".disconnDevice").hide()
-						document.getElementById('devicecontainer').contentWindow.location.reload(true);
+						refreshframe();
 					}else{
 						$(".connectDevice").show().removeClass("btn-success").addClass("btn-warning").html("重新连接")
 						$(".disconnDevice").hide()
@@ -100,14 +100,10 @@
 		})
 
 		$('[data-toggle="tooltip"]').tooltip()
-
 	})
 
-
-	var ts = new Array();
-	var appium_not_ready = true;
-
 	function isAppiumReady(deviceName,replacedName){
+		var appium_not_ready = true;
 		var interval_id = window.setInterval(function() {
 			$.get("/isappiumready",function(data) {
 				if (data.status) {
@@ -128,10 +124,11 @@
 							},
 							success: function(data) {
 								$("#connect-info").append("启动成功！"+"\r\n")
-								$(".connectDevice").attr("disabled",false).removeClass("btn-warning").addClass("btn-default").html("安装并启动app").hide()
-								$(".disconnDevice").show()
-								$(".tooltip").hide()
-								document.getElementById('devicecontainer').contentWindow.location.reload(true);
+								$(".connectDevice").attr("disabled",false).removeClass("btn-warning").addClass("btn-default").html("安装并启动app").hide();
+								$(".disconnDevice").show();
+								$(".tooltip").hide();
+								refreshframe();
+								//document.getElementById('devicecontainer').contentWindow.location.reload(true);
 							}
 						});
 					}
@@ -139,17 +136,11 @@
 					$("#connect-info").append(data.info+"\r\n")
 				}
 			})
-		},1200)
+		},1500)
 	}
 
 	function refreshframe(framename){
-		frame_doc = $(document.getElementById('devicecontainer').contentDocument)
-		$.get("/getdata",function(data){
-			nodeDatas = data.nodeDatas
-			nodeinfos = data.nodeinfos
-			frameinfos = data.frameinfos
-			console.log(nodeDatas)
-		})
+		devicecontainer.window.initSelectableTree();
 	}
 </script>
 </body>
