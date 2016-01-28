@@ -51,7 +51,7 @@
 				<div id="imgarea" class="row" style="text-align:center">
 					<span class="col-xs-5"><a href="javascript:;" id="goback">Back</a></span>
 					<span class="col-xs-2"><a href="javascript:;" id="gohome">Home</a></span>
-					<span class="col-xs-5"><a href="javascript:;" id="gomenu">Menu</a></span>
+					<span class="col-xs-5"><a href="javascript:;" id="power">Power</a></span>
 				<img id="screenshot" src={% if nodeDatas %}"static/images/current.png"{%else%}"static/images/mirror.jpg"{% endif %} alt="img" width="432" height="768"/>
 				</div>
 
@@ -94,9 +94,9 @@ $(function() {
 		})
 	});
 
-	$("#gomenu").click(function(){
-		$(window.parent.document).find("#connect-info").empty().append("按Menu键,等待响应....")
-		$.get("/sendkeycode/1",function(data){
+	$("#power").click(function(){
+		$(window.parent.document).find("#connect-info").empty().append("按电源键,等待响应....")
+		$.get("/sendkeycode/26",function(data){
 			if(!data.status){
 				$(window.parent.document).find("#connect-info").append("\r\n操作失败:appium已断开,请重启服务！")
 				layer.alert("error:"+data.info)

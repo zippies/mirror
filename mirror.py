@@ -21,6 +21,7 @@ nodeinfos = {}
 frameinfos = {}
 reversedframe = False
 reverseframe = {}
+deviceStatus = {}
 
 def getChildNodes(node):
 	nodes = [n for n in node.childNodes if n.nodeName !='#text']
@@ -139,6 +140,7 @@ def getNodes(index,node,nodeinfos,frameinfos):
 
 
 def getDeviceState():
+	global deviceStatus
 	cmd = "adb devices"
 	devices = []
 	p = Popen(cmd,stdout=PIPE,shell=True)
@@ -156,6 +158,8 @@ def getDeviceState():
 			else:
 				device["replacedName"] = name
 			devices.append(device)
+			if name not in deviceStatus.keys():
+				deviceStatus[name] = False
 		else:
 			continue
 	
@@ -188,6 +192,7 @@ def stopAppium():
 
 @app.route("/connect/<devicename>",methods=['POST'])
 def connectDevice(devicename):
+	global deviceStatus
 	appiumlog = os.path.join(os.getcwd(),"logs",datetime.now().strftime("%Y_%m_%d_%H_%M_%S"),"appium.log")
 	os.makedirs(os.path.dirname(appiumlog))
 	cmd = "appium\
@@ -201,11 +206,14 @@ def connectDevice(devicename):
 			 --log-no-colors" %(appium_port,bootstrap_port,appiumlog,appium_log_level,devicename)
 	p = Process(target=os.system,args=(cmd,))
 	if is_Appium_Alive(appium_port):
+		for device in deviceStatus.keys():
+			deviceStatus[device] = False
 		stopAppium()
 	p.daemon = True
 	p.start()
 	info = "Starting Appium on port : %s bootstrap_port: %s for device %s" %(appium_port,bootstrap_port,devicename)
-
+	deviceStatus[devicename] = True
+	print(11111,deviceStatus)
 	return info
 
 
@@ -439,17 +447,14 @@ def getScreen():
 
 @app.route('/')
 def index():
-	global nodeDatas
+	global nodeDatas,deviceStatus
 	isconnect = False
 	devices = getDeviceState()
-
-	if is_Appium_Alive(appium_port):
-		isconnect = True
-	
+	print(deviceStatus)
 	return render_template(
 							"index.html",
 							devices=devices,
-							isconnect=isconnect
+							deviceStatus=deviceStatus
 	)
 
 if __name__ == "__main__":

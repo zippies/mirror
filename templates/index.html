@@ -28,11 +28,11 @@
 								{% if device.state == 'device' %}
 									<td>{{ device.deviceName }}</td>
 									
-									<td>{% if isconnect %}操作中..{% else %}连接正常{% endif %}</td>
+									<td>{% if deviceStatus[device.deviceName] %}操作中..{% else %}连接正常{% endif %}</td>
 									<td>
-										<button class="btn btn-danger disconnDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" {% if not isconnect %}style="display:none"{% endif %}>断开连接</button>
+										<button class="btn btn-danger disconnDevice" desc="{{device.replacedName}}" name="{{device.deviceName}}" id="dis_{{ device.replacedName }}" {% if not deviceStatus[device.deviceName] %}style="display:none"{% endif %}>断开连接</button>
 									
-										<button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" data-toggle="tooltip" data-placement="right" title="初始化可能较慢,请耐心等待" {% if isconnect %}style="display:none"{% endif %}>安装并启动app</button>
+										<button class="btn btn-default connectDevice" desc="{{device.replacedName}}" name="{{device.deviceName}}" id="con_{{ device.replacedName }}" data-toggle="tooltip" data-placement="right" title="初始化可能较慢,请耐心等待" {% if deviceStatus[device.deviceName] %}style="display:none"{% endif %}>安装并启动app</button>
 									</td>
 								{% elif device.state == 'unauthorized' %}
 									<td>{{ device.deviceName }}</td><td>未授权</td><td><button class="btn btn-default connectDevice" name="{{device.deviceName}}" id="{{ device.replacedName }}" disabled>未授权(unauthorized)</button></td>
@@ -62,19 +62,19 @@
 <script language="javascript">
 	$(function() {
 		$(".connectDevice").click(function() {
-			//refreshframe("devicecontainer");
-			$(this).attr("disabled",true)
+			$(this).attr("disabled", true).removeClass("btn-default").addClass("btn-warning").html("正在连接")
 			$("#connect-info").empty().append("正在启动appium...\r\n")
 			var deviceName = this.name
-			var replacedName = this.id
-			$(".connectDevice").attr("disabled", true).removeClass("btn-default").addClass("btn-warning").html("正在连接")
+			var device = this.getAttribute("desc")
+			console.log(deviceName+" "+device)
+			//$("#con_"+replacedName).attr("disabled", true).removeClass("btn-default").addClass("btn-warning").html("正在连接")
 			$.post("/connect/"+deviceName,function(data) {
-				isAppiumReady(deviceName,replacedName)
-				$("#"+replacedName).attr("disabled",false)
+				isAppiumReady(deviceName,device)
 			})
 		});
 
 		$(".disconnDevice").click(function(){
+			var desc = this.getAttribute("desc")
 			$("#connect-info").append("正在断开连接...")
 			$.ajax({
 				type: "GET",
@@ -87,12 +87,12 @@
 				success: function(data) {
 					if(data.status) {
 						$("#connect-info").empty().append("断开成功！")
-						$(".connectDevice").show()
-						$(".disconnDevice").hide()
+						$("#con_"+desc).show()
+						$("#dis_"+desc).hide()
 						refreshframe();
 					}else{
-						$(".connectDevice").show().removeClass("btn-success").addClass("btn-warning").html("重新连接")
-						$(".disconnDevice").hide()
+						$("#con_"+desc).show().removeClass("btn-success").addClass("btn-warning").html("重新连接")
+						$("#dis_"+desc).hide()
 						$("#connect-info").empty().append("断开失败："+data.info)
 					}
 				}
@@ -102,7 +102,7 @@
 		$('[data-toggle="tooltip"]').tooltip()
 	})
 
-	function isAppiumReady(deviceName,replacedName){
+	function isAppiumReady(deviceName,desc){
 		var appium_not_ready = true;
 		var interval_id = window.setInterval(function() {
 			$.get("/isappiumready",function(data) {
@@ -119,16 +119,16 @@
 							data:{"devicename":deviceName},
 							async: true,
 							error: function(request) {
-								$("#"+replacedName).removeClass("btn-default").addClass("btn-warning").html("连接失败,点击重试")
+								$("#con_"+desc).removeClass("btn-default").addClass("btn-warning").html("连接失败,点击重试")
 								$("#connect-info").empty().append("connection error");
 							},
 							success: function(data) {
 								$("#connect-info").append("启动成功！"+"\r\n")
-								$(".connectDevice").attr("disabled",false).removeClass("btn-warning").addClass("btn-default").html("安装并启动app").hide();
-								$(".disconnDevice").show();
+								console.log(desc)
+								$("#con_"+desc).attr("disabled",false).removeClass("btn-warning").addClass("btn-default").html("安装并启动app").hide();
+								$("#dis_"+desc).show();
 								$(".tooltip").hide();
 								refreshframe();
-								//document.getElementById('devicecontainer').contentWindow.location.reload(true);
 							}
 						});
 					}
