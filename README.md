@@ -3,15 +3,18 @@ a web tool to replace the uiautomatorviewer(just for android)
 
 环境依赖：
 	
-	1、python3.3.5及以上 (以及flask模块,pip install flask)
+	1、python3.3.5及以上 download_url : https://www.python.org/downloads/release/python-335/
 
-	2、appium
+	2、下载安装setuptools、pip模块
+
+	3、进入mirror目录，执行:pip install -r requirments.txt 安装依赖模块
+
+	4、安装appium并配置好环境变量(确保在命令行下输入:appium -a localhost -p 4723  命令行能正常输出启动信息)
+
 
 配置使用：
 
-	1、将目录下aapt.exe拷贝至本机任意目录,并将该目录加入环境变量path中,确保在dos下运行:aapt,能够输出正常信息
-
-	2、修改config.py中的apk存放路径、设备信息以及port(默认8088)
+	1、修改config.py中的apk存放路径、设备信息以及port(默认8088)
 
 	3、dos命令行进入主目录，运行：python mirror.py 
 

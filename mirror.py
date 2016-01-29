@@ -3,6 +3,7 @@
 #datetime: 2016-01-26
 from flask import Flask,render_template,request,jsonify
 from multiprocessing import Process
+from threading import Thread
 from xml.dom import minidom
 from config import debug,port,apk,device_info
 from datetime import datetime
@@ -22,6 +23,8 @@ frameinfos = {}
 reversedframe = False
 reverseframe = {}
 deviceStatus = {}
+packageName = None
+main_activity = None
 
 def getChildNodes(node):
 	nodes = [n for n in node.childNodes if n.nodeName !='#text']
@@ -204,26 +207,28 @@ def connectDevice(devicename):
 			 --log-level %s \
 			 -U %s \
 			 --log-no-colors" %(appium_port,bootstrap_port,appiumlog,appium_log_level,devicename)
-	p = Process(target=os.system,args=(cmd,))
+	p = Thread(target=os.system,args=(cmd,))
 	if is_Appium_Alive(appium_port):
 		for device in deviceStatus.keys():
 			deviceStatus[device] = False
 		stopAppium()
-	p.daemon = True
+	#p.daemon = True
+	p.setDaemon(True)
 	p.start()
 	info = "Starting Appium on port : %s bootstrap_port: %s for device %s" %(appium_port,bootstrap_port,devicename)
 	deviceStatus[devicename] = True
-	print(11111,deviceStatus)
 	return info
 
 
 @app.route("/disconnect")
 def disconnect():
-	global driver
+	global driver,deviceStatus
 	resp = {"status":True,"info":"disconnect success!"}
 	try:
 		driver.quit()
 		stopAppium()
+		for key in deviceStatus.keys():
+			deviceStatus[key] = False
 	except:
 		resp["status"] = False
 		resp["info"] = "appium已断开连接,请重新连接"
@@ -405,9 +410,22 @@ def getdata():
 
 	return jsonify(resp)
 
+@app.route("/isconnect")
+def isconnect():
+	global deviceStatus
+	resp = {"status":True,"info":None}
+	for value in deviceStatus.values():
+		if value:
+			break
+	else:
+		resp["status"] = False
+		resp["info"] = "No device connected!"
+
+	return jsonify(resp)
+
 @app.route('/getscreen',methods=["GET","POST"])
 def getScreen():
-	global driver,nodeDatas,nodeinfos,frameinfos,reversedframe,reverseframe
+	global driver,nodeDatas,nodeinfos,frameinfos,reversedframe,reverseframe,packageName,main_activity
 	if reversedframe:
 		reverseframe = copy.deepcopy(frameinfos)
 		for id in reverseframe.keys():
@@ -420,7 +438,6 @@ def getScreen():
 
 	if request.method == "POST":
 		devicename = request.args.get("devicename")
-		packageName,main_activity = getAppInfo(apk)
 		capabilities = {
 				"app":apk,
 				"appPackage":packageName,
@@ -438,6 +455,8 @@ def getScreen():
 		freshScreen()
 		return "ok"
 
+
+
 	return render_template(
 							"deviceinfo.html",
 							nodeDatas=nodeDatas,
@@ -447,13 +466,16 @@ def getScreen():
 
 @app.route('/')
 def index():
-	global nodeDatas,deviceStatus
-	isconnect = False
+	global nodeDatas,deviceStatus,packageName,main_activity
+	
 	devices = getDeviceState()
-	print(deviceStatus)
+	packageName,main_activity = getAppInfo(apk)
+
 	return render_template(
 							"index.html",
 							devices=devices,
+							packageName=packageName,
+							main_activity=main_activity,
 							deviceStatus=deviceStatus
 	)
 

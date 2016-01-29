@@ -1,0 +1,9 @@
+Appium-Python-Client==0.20
+Flask==0.10.1
+itsdangerous==0.24
+Jinja2==2.8
+MarkupSafe==0.23
+python-engineio==0.8.7
+requests==2.9.0
+six==1.10.0
+Werkzeug==0.11.3

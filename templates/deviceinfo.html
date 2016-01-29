@@ -25,25 +25,25 @@
 						</tr>
 					  </thead>
 					  <tbody id="nodebody">
-					  	<tr><td>resource-id</td><td></td></tr>
-					  	<tr><td>class</td><td></td></tr>
-					  	<tr><td>content-desc</td><td></td></tr>
-					  	<tr><td>text</td><td></td></tr>
-					  	<tr><td>index</td><td></td></tr>
-					  	<tr><td>xpath</td><td></td></tr>
-					  	<tr><td>bounds</td><td></td></tr>
-					  	<tr><td>package</td><td></td></tr>
-						<tr><td>focusable</td><td></td></tr>
-						<tr><td>scrollable</td><td></td></tr>
-						<tr><td>long-clickable</td><td></td></tr>
-						<tr><td>password</td><td></td></tr>
-						<tr><td>instance</td><td></td></tr>
-						<tr><td>focused</td><td></td></tr>
-						<tr><td>clickable</td><td></td></tr>
-						<tr><td>selected</td><td></td></tr>
-						<tr><td>checked</td><td></td></tr>
-						<tr><td>checkable</td><td></td></tr>
-						<tr><td>enabled</td><td></td></tr>
+					  	<tr><td>resource-id</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>class</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>content-desc</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>text</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>index</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>xpath</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>bounds</td><td><input type="text" value="" class="form-control"></input></td></tr>
+					  	<tr><td>package</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>focusable</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>scrollable</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>long-clickable</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>password</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>instance</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>focused</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>clickable</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>selected</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>checked</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>checkable</td><td><input type="text" value="" class="form-control"></input></td></tr>
+						<tr><td>enabled</td><td><input type="text" value="" class="form-control"></input></td></tr>
 					  </tbody>
 					</table>
 			</div>
@@ -52,7 +52,6 @@
 					<span class="col-xs-5"><a href="javascript:;" id="goback">Back</a></span>
 					<span class="col-xs-2"><a href="javascript:;" id="gohome">Home</a></span>
 					<span class="col-xs-5"><a href="javascript:;" id="power">Power</a></span>
-				<img id="screenshot" src={% if nodeDatas %}"static/images/current.png"{%else%}"static/images/mirror.jpg"{% endif %} alt="img" width="432" height="768"/>
 				</div>
 
 			</div>
@@ -67,7 +66,7 @@
 	
 <script type="text/javascript">
 $(function() {
-	initSelectableTree(true)
+	initSelectableTree()
 	$("#goback").click(function(){
 		$(window.parent.document).find("#connect-info").empty().append("按返回键,等待响应....")
 		$.get("/sendkeycode/4",function(data){
@@ -109,10 +108,22 @@ $(function() {
 
 });
 
-	function initSelectableTree(isinit) {
+	function initSelectableTree() {
 		$("#screenshot").remove()
-		$("#imgarea").append('<img id="screenshot" alt="img" width="432" height="768" src="/static/images/current.png?temp='+Math.random()+'" >')
-
+		$.ajax({
+			url:"/isconnect",
+			async:true,
+			error:function(request){
+				$(window.parent.document).find("#connect-info").append(request.statusText + " " + request.status)
+			},
+			success:function(data){
+				if(data.status){
+					$("#imgarea").append('<img id="screenshot" alt="img" width="432" height="768" src="/static/images/current.png?temp='+Math.random()+'" >')
+				}else{
+					$("#imgarea").append('<img id="screenshot" alt="img" width="432" height="768" src="/static/images/mirror.jpg?temp='+Math.random()+'" >')
+				}
+			}
+		})
 		$(".note").remove()
 		$(".notep").remove()
 		$("#nodeTreeView").empty()
@@ -335,8 +346,7 @@ $(function() {
 					})
 				},
 				onNodeUnselected:function(event,node) {
-					var id = node.id;
-					$("#"+id).hide();
+					$("#"+node.id).hide();
 				}
 			});
 		});
