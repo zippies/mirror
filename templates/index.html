@@ -11,8 +11,17 @@
 	<div class="container-fluid">
 		<div>
 		<div class="row" style="height:120px">
-			<div class="col-xs-3" style="align:center">
-				<label>APP信息:</label>
+			<div class="col-xs-4" style="align:center">
+				<div class="row">
+					<div class="col-xs-6">
+						<label>APP信息: (指定需要操作的apk路径)</label>
+					</div>
+					<div class="col-xs-6">
+						<form action="/getapp" id="upload_form" method="post" enctype="multipart/form-data">
+							<input type="file" name="file" id="upload_apk" accept="apk"/>
+						</form>
+					</div>
+				</div>
 				<table class="table table-bordered" style="width:100%;text-align:center">
 					<thread>
 						<tr>
@@ -21,11 +30,11 @@
 						</tr>
 					</thread>
 					<tbody>
-						<tr><td>{{ packageName }}</td><td>{{ main_activity }}</td></tr>
+						<tr><td><input type="text" class="form-control" value="{{ packageName }}" /></td><td><input type="text" class="form-control" value="{{ main_activity }}" /></td></tr>
 					</tbody>
 				</table>
 			</div>
-			<div class="col-xs-6" style="align:center">
+			<div class="col-xs-5" style="align:center">
 				<label>设备信息:</label>
 				<table class="table table-bordered" style="width:100%;text-align:center">
 					{% if devices %}
@@ -69,8 +78,8 @@
 		</div>
 		<hr>
 		<div class="row">
-            <iframe id="devicecontainer" name="devicecontainer" align="center" width="100%" src="/getscreen" frameborder="no" border="0" marginwidth="0" marginheight="0" height="2000" scrolling="no">
-            </iframe>
+			<iframe id="devicecontainer" name="devicecontainer" align="center" width="100%" src="/getscreen" frameborder="no" border="0" marginwidth="0" marginheight="0" height="2000" scrolling="no">
+			</iframe>
 		</div>
 	</div>
 	
@@ -112,6 +121,11 @@
 		})
 
 		$('[data-toggle="tooltip"]').tooltip()
+
+		$("#upload_apk").change(function(){
+			$("#upload_form").submit()
+		})
+
 	})
 
 	function isAppiumReady(deviceName,desc){
@@ -153,6 +167,7 @@
 	function refreshframe(framename){
 		devicecontainer.window.initSelectableTree();
 	}
+
 </script>
 </body>
 </html>

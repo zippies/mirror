@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 #autor: chao.chen
 #datetime: 2016-01-26
-from flask import Flask,render_template,request,jsonify
+from flask import Flask,render_template,request,jsonify,redirect,url_for
+from werkzeug.utils import secure_filename
 from multiprocessing import Process
 from threading import Thread
 from xml.dom import minidom
-from config import debug,port,apk,device_info
+from config import debug,port,device_info
 from datetime import datetime
 from subprocess import Popen,PIPE
 from main.basecase import AndroidDevice
@@ -13,6 +14,7 @@ import os,json,re,platform,requests,copy
 
 app = Flask(__name__)
 _id = 0
+apk = None
 appium_port = 14111
 bootstrap_port = 14112
 appium_log_level = "error"
@@ -23,8 +25,9 @@ frameinfos = {}
 reversedframe = False
 reverseframe = {}
 deviceStatus = {}
-packageName = None
-main_activity = None
+packageName = ""
+main_activity = ""
+UPLOAD_FOLDER = os.path.join(os.getcwd(),'static','Uploads')
 
 def getChildNodes(node):
 	nodes = [n for n in node.childNodes if n.nodeName !='#text']
@@ -219,7 +222,6 @@ def connectDevice(devicename):
 	deviceStatus[devicename] = True
 	return info
 
-
 @app.route("/disconnect")
 def disconnect():
 	global driver,deviceStatus
@@ -356,16 +358,24 @@ def fresh():
 	return jsonify(resp)
 
 
-def getAppInfo(apk):
+@app.route("/getapp",methods=["POST"])
+def getAppInfo():
+	global packageName,main_activity,apk
+	f = request.files['file']
+	fname = secure_filename(f.filename)
+	apk = os.path.join(UPLOAD_FOLDER,fname)
+	f.save(apk)
 	cmd_activity = "aapt d badging %s|findstr launchable-activity" %apk
 	cmd_package = "aapt d badging %s|findstr package" %apk
 	activity = Popen(cmd_activity,stdout=PIPE,shell=True)
 	package = Popen(cmd_package,stdout=PIPE,shell=True)
-	activity_name = activity.stdout.read().decode().split("name='")[1].split("'")[0]
-	package_name = package.stdout.read().decode().split("name='")[1].split("'")[0]
+	main_activity = activity.stdout.read().decode().split("name='")[1].split("'")[0]
+	packageName = package.stdout.read().decode().split("name='")[1].split("'")[0]
 	activity.kill()
 	package.kill()
-	return (package_name,activity_name)
+
+	return redirect(url_for("index"))
+
 
 def freshScreen(seconds=2):
 	global _id,driver,nodeDatas,nodeinfos,frameinfos
@@ -425,7 +435,7 @@ def isconnect():
 
 @app.route('/getscreen',methods=["GET","POST"])
 def getScreen():
-	global driver,nodeDatas,nodeinfos,frameinfos,reversedframe,reverseframe,packageName,main_activity
+	global driver,nodeDatas,nodeinfos,frameinfos,reversedframe,reverseframe,packageName,main_activity,apk
 	if reversedframe:
 		reverseframe = copy.deepcopy(frameinfos)
 		for id in reverseframe.keys():
@@ -469,7 +479,6 @@ def index():
 	global nodeDatas,deviceStatus,packageName,main_activity
 	
 	devices = getDeviceState()
-	packageName,main_activity = getAppInfo(apk)
 
 	return render_template(
 							"index.html",
