@@ -488,6 +488,11 @@ def index():
 							deviceStatus=deviceStatus
 	)
 
+@app.route("/test",methods=["POST"])
+def test():
+	print(request.form)
+	return "ok"
+
 if __name__ == "__main__":
 	app.debug = debug
 	app.run('0.0.0.0',port=port)
